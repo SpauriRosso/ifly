@@ -19,6 +19,7 @@ func main() {
 		Description: "A local audiovisual artwork laboratory",
 		Services: []application.Service{
 			application.NewService(&AnalysisService{}),
+			application.NewService(NewSemanticService()),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
