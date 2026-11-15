@@ -20,6 +20,17 @@ func countLeadNotes(plan MusicPlan) int {
 	return count
 }
 
+// countVoiceInSection takes a score, voice, and beat range and returns the matching event count for arrangement checks.
+func countVoiceInSection(plan MusicPlan, voice string, start, end float64) int {
+	count := 0
+	for _, note := range plan.Notes {
+		if note.Voice == voice && note.Beat >= start && note.Beat < end {
+			count++
+		}
+	}
+	return count
+}
+
 // TestMusicServiceCompose checks that one artwork has a repeatable score and opposing scenes produce different scores.
 func TestMusicServiceCompose(t *testing.T) {
 	dataURL := encodeTestImage(t, image.NewRGBA(image.Rect(0, 0, 16, 16)))
@@ -91,6 +102,18 @@ func TestVoiceChordPrefersNearInversion(t *testing.T) {
 	}
 	if motion >= 15 {
 		t.Fatalf("chord motion is too large: %v to %v", first, second)
+	}
+}
+
+// TestArpeggioBuildsAndRecedes checks that the counterline enters after the opening and withdraws before the final cadence.
+func TestArpeggioBuildsAndRecedes(t *testing.T) {
+	calm := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	tense := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
+	if countVoiceInSection(calm, "arp", 0, 16) != 0 || countVoiceInSection(calm, "arp", 32, 48) == 0 || countVoiceInSection(calm, "arp", 56, 64) != 0 {
+		t.Fatal("the calm counterline did not follow the phrase arc")
+	}
+	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(calm, "arp", 32, 48) {
+		t.Fatal("the tense bridge should carry more counterline motion")
 	}
 }
 
