@@ -23,13 +23,3 @@ export interface MusicPlan {
     "beatsPerLoop": number;
     "notes": MusicNote[] | null;
 }
-
-/**
- * SemanticAnalysis is an unverified local model description, separate from measured visual features.
- */
-export interface SemanticAnalysis {
-    "description": string;
-    "subjects": string[] | null;
-    "uncertain": boolean;
-    "source": string;
-}

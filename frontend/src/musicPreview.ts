@@ -1,5 +1,6 @@
 import { MusicService } from '../bindings/changeme'
-import type { MusicPlan, SemanticAnalysis } from '../bindings/changeme/models'
+import type { MusicPlan } from '../bindings/changeme/models'
+import type { SemanticAnalysis } from '../bindings/changeme/internal/semantic/models'
 import { prepareAnalysisImage } from './structuralAnalysis'
 
 // composePreview takes an imported image URL and validated model description and returns Go's repeatable score.

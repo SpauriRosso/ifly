@@ -13,12 +13,12 @@ import * as $models from "./models.js";
  * Analyze validates a bounded PNG and runs one local inference at a time with a fixed timeout.
  */
 export function Analyze(dataURL: string): $CancellablePromise<$models.SemanticAnalysis> {
-    return $Call.ByID(1252520355, dataURL);
+    return $Call.ByID(2856502257, dataURL);
 }
 
 /**
  * Cancel stops the current inference request without changing previously completed results.
  */
 export function Cancel(): $CancellablePromise<void> {
-    return $Call.ByID(1409790795);
+    return $Call.ByID(2749901345);
 }

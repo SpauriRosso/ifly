@@ -7,11 +7,15 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as semantic$0 from "./internal/semantic/models.js";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as $models from "./models.js";
 
 /**
  * Compose validates a bounded image and model result, then returns a deterministic score tied to the image bytes.
  */
-export function Compose(dataURL: string, semantic: $models.SemanticAnalysis): $CancellablePromise<$models.MusicPlan> {
-    return $Call.ByID(1278071490, dataURL, semantic);
+export function Compose(dataURL: string, interpretation: semantic$0.SemanticAnalysis): $CancellablePromise<$models.MusicPlan> {
+    return $Call.ByID(1278071490, dataURL, interpretation);
 }

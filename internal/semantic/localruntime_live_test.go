@@ -1,4 +1,4 @@
-package main
+package semantic
 
 import (
 	"context"
@@ -20,7 +20,7 @@ func TestLocalRuntimeLive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtime := &LocalRuntime{root: filepath.Join(root, "local-vlm")}
+	runtime := &LocalRuntime{root: filepath.Join(root, "..", "..", "local-vlm")}
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 	if err := runtime.Start(ctx); err != nil {

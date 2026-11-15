@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"changeme/internal/analysis"
+	"changeme/internal/semantic"
 )
 
 // MusicNote is one scheduled synthesizer event measured in beats from the start of a loop.
@@ -31,21 +32,21 @@ type MusicPlan struct {
 type MusicService struct{}
 
 // Compose validates a bounded image and model result, then returns a deterministic score tied to the image bytes.
-func (s *MusicService) Compose(dataURL string, semantic SemanticAnalysis) (MusicPlan, error) {
+func (s *MusicService) Compose(dataURL string, interpretation semantic.SemanticAnalysis) (MusicPlan, error) {
 	image, err := analysis.DecodeImage(dataURL)
 	if err != nil {
 		return MusicPlan{}, err
 	}
-	if utf8.RuneCountInString(semantic.Description) > 300 || len(semantic.Subjects) > 8 {
+	if utf8.RuneCountInString(interpretation.Description) > 300 || len(interpretation.Subjects) > 8 {
 		return MusicPlan{}, errors.New("invalid semantic input")
 	}
-	for _, subject := range semantic.Subjects {
+	for _, subject := range interpretation.Subjects {
 		if utf8.RuneCountInString(subject) > 60 {
 			return MusicPlan{}, errors.New("invalid semantic subject")
 		}
 	}
 	digest := sha256.Sum256([]byte(dataURL))
-	plan := composeMusic(analysis.MeasureImage(image), semantic, digest)
+	plan := composeMusic(analysis.MeasureImage(image), interpretation, digest)
 	plan.Seed = hex.EncodeToString(digest[:8])
 	return plan, nil
 }

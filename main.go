@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"changeme/internal/analysis"
+	"changeme/internal/semantic"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -20,7 +21,7 @@ func main() {
 		Description: "A local audiovisual artwork laboratory",
 		Services: []application.Service{
 			application.NewService(&analysis.AnalysisService{}),
-			application.NewService(NewSemanticService()),
+			application.NewService(semantic.NewSemanticService()),
 			application.NewService(&MusicService{}),
 		},
 		Assets: application.AssetOptions{

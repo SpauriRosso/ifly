@@ -6,6 +6,7 @@ import (
 	"unicode"
 
 	"changeme/internal/analysis"
+	"changeme/internal/semantic"
 )
 
 type musicalCharacter struct {
@@ -18,8 +19,8 @@ type musicalCharacter struct {
 }
 
 // selectMusicalCharacter takes the model's unverified words and returns a conservative mood and tonal vocabulary.
-func selectMusicalCharacter(semantic SemanticAnalysis) musicalCharacter {
-	words := strings.FieldsFunc(strings.ToLower(semantic.Description+" "+strings.Join(semantic.Subjects, " ")), func(r rune) bool {
+func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCharacter {
+	words := strings.FieldsFunc(strings.ToLower(interpretation.Description+" "+strings.Join(interpretation.Subjects, " ")), func(r rune) bool {
 		return !unicode.IsLetter(r)
 	})
 	scores := [3]int{}
@@ -35,7 +36,7 @@ func selectMusicalCharacter(semantic SemanticAnalysis) musicalCharacter {
 			scores[2] += 2
 		}
 	}
-	if semantic.Uncertain {
+	if interpretation.Uncertain {
 		for index, score := range scores {
 			if score < 2 {
 				scores[index] = 0
@@ -55,8 +56,8 @@ func selectMusicalCharacter(semantic SemanticAnalysis) musicalCharacter {
 }
 
 // composeMusic takes measured structure, tentative semantics, and an image digest and returns an eight-bar score.
-func composeMusic(structure analysis.StructuralAnalysis, semantic SemanticAnalysis, digest [32]byte) MusicPlan {
-	character := selectMusicalCharacter(semantic)
+func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic.SemanticAnalysis, digest [32]byte) MusicPlan {
+	character := selectMusicalCharacter(interpretation)
 	complexity := math.Max(0, math.Min(1, structure.Complexity))
 	tempo := character.baseTempo + int(math.Round(14*complexity))
 	root := 48 + int(digest[0]%12)
