@@ -1,6 +1,7 @@
 import type { MusicNote, MusicPlan } from '../bindings/ifly/internal/music/models'
 import { nearestSample, sampleKey } from './musicInstruments'
 import { loadInstrumentSamples, type LoadedSample } from './musicSamples'
+import { createTempoMap, secondsAtBeat, type TempoMap } from './musicTiming'
 import { TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
 
 // seededNoise takes an image seed and returns a reproducible stream of audio samples between minus one and one.
@@ -53,7 +54,7 @@ export class MusicPlayer {
   private loadController: AbortController | null = null
   private timer: number | null = null
   private notes: MusicNote[] = []
-  private secondsPerBeat = 0
+  private tempoMap: TempoMap | null = null
   private loopStart = 0
   private loopDuration = 0
   private nextNote = 0
@@ -64,9 +65,10 @@ export class MusicPlayer {
     if (!plan.notes?.length || plan.notes.length > 256 || plan.tempoBpm < 40 || plan.tempoBpm > 180 || plan.beatsPerLoop < 4 || plan.beatsPerLoop > 128) {
       throw new Error('Le plan musical est invalide.')
     }
+    const tempoMap = createTempoMap(plan.sections, plan.beatsPerLoop)
     const notes = plan.notes
     const profile = TIMBRES[plan.timbre]
-    if (!profile || notes.some((note, index) => !Number.isFinite(note.beat) || note.beat < 0 || note.beat >= plan.beatsPerLoop || !Number.isFinite(note.duration) || note.duration <= 0 || note.duration > 16 || !Number.isFinite(note.velocity) || note.velocity <= 0 || note.velocity > 1 || !Number.isInteger(note.midi) || note.midi < 24 || note.midi > 100 || !Object.prototype.hasOwnProperty.call(profile.voices, note.voice) || (index > 0 && note.beat < notes[index - 1].beat))) {
+    if (!profile || notes.some((note, index) => !Number.isFinite(note.beat) || note.beat < 0 || note.beat >= plan.beatsPerLoop || !Number.isFinite(note.duration) || note.duration <= 0 || note.duration > 16 || note.beat + note.duration > plan.beatsPerLoop || !Number.isFinite(note.velocity) || note.velocity <= 0 || note.velocity > 1 || !Number.isInteger(note.midi) || note.midi < 24 || note.midi > 100 || !Object.prototype.hasOwnProperty.call(profile.voices, note.voice) || (index > 0 && note.beat < notes[index - 1].beat))) {
       throw new Error('Les notes du plan musical sont invalides.')
     }
     const context = new AudioContext()
@@ -98,8 +100,8 @@ export class MusicPlayer {
     const loadController = new AbortController()
     this.loadController = loadController
     this.notes = notes
-    this.secondsPerBeat = 60 / plan.tempoBpm
-    this.loopDuration = plan.beatsPerLoop * this.secondsPerBeat
+    this.tempoMap = tempoMap
+    this.loopDuration = tempoMap.loopSeconds
     this.nextNote = 0
     try {
       await context.resume()
@@ -145,6 +147,7 @@ export class MusicPlayer {
     this.loadController?.abort()
     this.loadController = null
     this.notes = []
+    this.tempoMap = null
     if (!context) return
     if (context.state === 'running' && master) {
       master.gain.setTargetAtTime(0, context.currentTime, 0.015)
@@ -157,11 +160,12 @@ export class MusicPlayer {
   // schedule places notes just ahead of the audio clock and returns without waiting for playback.
   private schedule(): void {
     const context = this.context
-    if (!context || context.state !== 'running' || !this.notes.length) return
+    const tempoMap = this.tempoMap
+    if (!context || !tempoMap || context.state !== 'running' || !this.notes.length) return
     const horizon = context.currentTime + 0.25
-    while (this.loopStart + this.notes[this.nextNote].beat * this.secondsPerBeat <= horizon) {
+    while (this.loopStart + secondsAtBeat(tempoMap, this.notes[this.nextNote].beat) <= horizon) {
       const note = this.notes[this.nextNote]
-      const at = this.loopStart + note.beat * this.secondsPerBeat
+      const at = this.loopStart + secondsAtBeat(tempoMap, note.beat)
       if (at >= context.currentTime - 0.02) this.playNote(note, at)
       this.nextNote++
       if (this.nextNote === this.notes.length) {
@@ -176,7 +180,8 @@ export class MusicPlayer {
     const context = this.context
     const master = this.master
     const profile = this.profile
-    if (!context || !master || !profile) return
+    const tempoMap = this.tempoMap
+    if (!context || !master || !profile || !tempoMap) return
     const voice = note.voice as MusicVoice
     if (voice === 'pulse') {
       this.playPulse(note, at)
@@ -190,7 +195,7 @@ export class MusicPlayer {
     const source = context.createBufferSource()
     const envelope = context.createGain()
     const filter = context.createBiquadFilter()
-    const duration = Math.max(0.1, Math.min(8, note.duration * this.secondsPerBeat))
+    const duration = Math.max(0.1, Math.min(8, secondsAtBeat(tempoMap, note.beat + note.duration) - secondsAtBeat(tempoMap, note.beat)))
     const attack = Math.min(timbre.attack, duration * 0.3)
     const release = Math.min(timbre.release, duration * 0.4)
     const level = note.velocity * timbre.gain
@@ -229,15 +234,16 @@ export class MusicPlayer {
   private playPulse(note: MusicNote, at: number): void {
     const context = this.context
     const master = this.master
+    const tempoMap = this.tempoMap
     const timbre = this.profile?.voices.pulse
     const instrument = timbre?.instrument
     const sample = instrument ? this.samples.get(sampleKey(instrument, nearestSample(instrument, note.midi))) : null
     const buffer = sample?.buffer ?? this.pulseBuffer
-    if (!context || !master || !timbre || !buffer) return
+    if (!context || !master || !tempoMap || !timbre || !buffer) return
     const source = context.createBufferSource()
     const filter = context.createBiquadFilter()
     const envelope = context.createGain()
-    const duration = sample ? Math.min(0.65, buffer.duration) : Math.max(0.04, Math.min(0.16, note.duration * this.secondsPerBeat))
+    const duration = sample ? Math.min(0.65, buffer.duration) : Math.max(0.04, Math.min(0.16, secondsAtBeat(tempoMap, note.beat + note.duration) - secondsAtBeat(tempoMap, note.beat)))
     source.buffer = buffer
     filter.type = sample ? 'lowpass' : 'highpass'
     filter.frequency.value = timbre.cutoff

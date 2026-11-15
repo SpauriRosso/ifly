@@ -34,4 +34,5 @@ export interface MusicSection {
     "startBeat": number;
     "endBeat": number;
     "energy": number;
+    "tempoBpm": number;
 }
