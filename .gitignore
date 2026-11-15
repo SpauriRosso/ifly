@@ -40,7 +40,8 @@ frontend/node_modules/
 frontend/dist/
 
 # Unused Wails template files and local migration backups
-frontend/public/
+frontend/public/*
+!frontend/public/samples/
 frontend/Inter Font License.txt
 frontend/bindings/events/
 frontend/bindings/github.com/
