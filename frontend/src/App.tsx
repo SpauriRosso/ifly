@@ -12,10 +12,18 @@ import './app.css'
 
 const MOOD_LABELS: Record<string, string> = { calm: 'Calme', tense: 'Tendue', energetic: 'Énergique', neutral: 'Neutre' }
 const MODE_LABELS: Record<string, string> = { pentatonic: 'pentatonique', minor: 'mineur', major: 'majeur', dorian: 'dorien' }
+const TIMBRE_LABELS: Record<string, string> = { warm: 'chaleureux', dark: 'sombre', bright: 'clair', soft: 'doux' }
 
 // percent formats a normalized metric for the diagnostic panel.
 function percent(value: number): string {
   return `${Math.round(value * 100)} %`
+}
+
+// describeMusicForm takes a generated plan and returns its phrase labels and approximate loop duration in French.
+function describeMusicForm(plan: MusicPlan): string {
+  const seconds = Math.round(plan.beatsPerLoop * 60 / plan.tempoBpm)
+  const duration = seconds >= 60 ? `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, '0')} s` : `${seconds} s`
+  return `${plan.sections?.map(section => section.label).join(' → ') ?? 'Forme indisponible'} · ${duration}`
 }
 
 // App owns the temporary artwork, its asynchronous analysis, and disposable preview resources.
@@ -269,7 +277,11 @@ function App() {
       </section>
       <section className="inspector-section music-section">
         <h2>Esquisse musicale · laboratoire</h2>
-        {musicPlan ? <><p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p><p className="hint">Composition locale reproductible, liée à cette image. Écoutez-la avec le bouton en haut à droite.</p></> : <p className="hint">La musique est préparée après l’interprétation.</p>}
+        {musicPlan ? <>
+          <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
+          <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
+          <p className="analysis-note">Écoute de laboratoire liée à cette image. La pièce recommence après sa conclusion.</p>
+        </> : <p className="hint">La musique est préparée après l’interprétation.</p>}
         {musicError && <p className="error" role="alert">{musicError}</p>}
       </section>
     </aside>
