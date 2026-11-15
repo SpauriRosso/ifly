@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"changeme/internal/analysis"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -72,7 +73,7 @@ func (s *SemanticService) ServiceShutdown() error {
 
 // Analyze validates a bounded PNG and runs one local inference at a time with a fixed timeout.
 func (s *SemanticService) Analyze(dataURL string) (SemanticAnalysis, error) {
-	if _, err := decodeAnalysisImage(dataURL); err != nil {
+	if _, err := analysis.DecodeImage(dataURL); err != nil {
 		return SemanticAnalysis{}, err
 	}
 	s.mu.Lock()

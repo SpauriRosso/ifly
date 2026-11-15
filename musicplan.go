@@ -4,6 +4,8 @@ import (
 	"math"
 	"strings"
 	"unicode"
+
+	"changeme/internal/analysis"
 )
 
 type musicalCharacter struct {
@@ -53,7 +55,7 @@ func selectMusicalCharacter(semantic SemanticAnalysis) musicalCharacter {
 }
 
 // composeMusic takes measured structure, tentative semantics, and an image digest and returns an eight-bar score.
-func composeMusic(structure StructuralAnalysis, semantic SemanticAnalysis, digest [32]byte) MusicPlan {
+func composeMusic(structure analysis.StructuralAnalysis, semantic SemanticAnalysis, digest [32]byte) MusicPlan {
 	character := selectMusicalCharacter(semantic)
 	complexity := math.Max(0, math.Min(1, structure.Complexity))
 	tempo := character.baseTempo + int(math.Round(14*complexity))

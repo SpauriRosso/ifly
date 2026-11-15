@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { MusicPlan, SemanticAnalysis, StructuralAnalysis } from '../bindings/changeme/models'
+import type { MusicPlan, SemanticAnalysis } from '../bindings/changeme/models'
+import type { StructuralAnalysis } from '../bindings/changeme/internal/analysis/models'
 import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
 import { createEdgePreview } from './edgePreview'

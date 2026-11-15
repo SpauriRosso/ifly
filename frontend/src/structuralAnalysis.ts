@@ -1,5 +1,5 @@
-import { AnalysisService } from '../bindings/changeme'
-import type { StructuralAnalysis } from '../bindings/changeme/models'
+import { AnalysisService } from '../bindings/changeme/internal/analysis'
+import type { StructuralAnalysis } from '../bindings/changeme/internal/analysis/models'
 
 // prepareAnalysisImage downsamples a validated preview into a bounded PNG for local Go analysis.
 export async function prepareAnalysisImage(url: string): Promise<string> {

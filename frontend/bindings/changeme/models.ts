@@ -33,16 +33,3 @@ export interface SemanticAnalysis {
     "uncertain": boolean;
     "source": string;
 }
-
-/**
- * StructuralAnalysis contains measured visual features; it makes no semantic or emotional claims.
- */
-export interface StructuralAnalysis {
-    "brightness": number;
-    "contrast": number;
-    "edgeDensity": number;
-    "colorDiversity": number;
-    "complexity": number;
-    "width": number;
-    "height": number;
-}

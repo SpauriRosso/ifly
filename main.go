@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log"
 
+	"changeme/internal/analysis"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -18,7 +19,7 @@ func main() {
 		Name:        "IFLY",
 		Description: "A local audiovisual artwork laboratory",
 		Services: []application.Service{
-			application.NewService(&AnalysisService{}),
+			application.NewService(&analysis.AnalysisService{}),
 			application.NewService(NewSemanticService()),
 			application.NewService(&MusicService{}),
 		},

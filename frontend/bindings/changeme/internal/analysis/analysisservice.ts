@@ -13,5 +13,5 @@ import * as $models from "./models.js";
  * Analyze decodes a small PNG data URL and returns deterministic visual measurements or an error.
  */
 export function Analyze(dataURL: string): $CancellablePromise<$models.StructuralAnalysis> {
-    return $Call.ByID(116508289, dataURL);
+    return $Call.ByID(3266133857, dataURL);
 }

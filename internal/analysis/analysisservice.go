@@ -1,4 +1,4 @@
-package main
+package analysis
 
 import (
 	"bytes"
@@ -25,15 +25,15 @@ type AnalysisService struct{}
 
 // Analyze decodes a small PNG data URL and returns deterministic visual measurements or an error.
 func (s *AnalysisService) Analyze(dataURL string) (StructuralAnalysis, error) {
-	img, err := decodeAnalysisImage(dataURL)
+	img, err := DecodeImage(dataURL)
 	if err != nil {
 		return StructuralAnalysis{}, err
 	}
-	return measureImage(img), nil
+	return MeasureImage(img), nil
 }
 
-// decodeAnalysisImage validates and decodes a bounded PNG shared by structural and semantic services.
-func decodeAnalysisImage(dataURL string) (image.Image, error) {
+// DecodeImage takes a PNG data URL and returns a decoded image after bounding its bytes and dimensions.
+func DecodeImage(dataURL string) (image.Image, error) {
 	if len(dataURL) > 2_000_000 || !strings.HasPrefix(dataURL, "data:image/png;base64,") {
 		return nil, errors.New("invalid analysis image")
 	}
@@ -52,8 +52,8 @@ func decodeAnalysisImage(dataURL string) (image.Image, error) {
 	return img, nil
 }
 
-// measureImage samples pixels, adjacent luminance changes, and quantized colors to describe image structure.
-func measureImage(img image.Image) StructuralAnalysis {
+// MeasureImage takes a decoded image and returns deterministic visual measurements without semantic claims.
+func MeasureImage(img image.Image) StructuralAnalysis {
 	bounds := img.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
 	luminance := make([]float64, w*h)
