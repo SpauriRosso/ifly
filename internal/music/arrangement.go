@@ -2,7 +2,7 @@ package music
 
 // arpeggioNotes takes a bar's harmony and phrase position and returns a light counterline only where the arrangement grows.
 func arpeggioNotes(start float64, section, bar int, voicing [3]int, energy float64, character musicalCharacter) []MusicNote {
-	if section == 0 || (section == 1 && bar%4 < 2) || (section == 3 && bar%4 >= 2) {
+	if section == 0 || section == 3 || (section == 1 && bar%4 < 2) || (section == 5 && bar%4 >= 2) {
 		return nil
 	}
 	rhythm := character.arpBeats

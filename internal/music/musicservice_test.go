@@ -44,7 +44,7 @@ func TestMusicServiceCompose(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(first, second) {
 		t.Fatalf("same artwork changed score: %v", err)
 	}
-	if first.Mood != "calm" || first.TempoBPM < 55 || first.BeatsPerLoop != 64 || len(first.Sections) != 4 || len(first.Notes) < 80 {
+	if first.Mood != "calm" || first.TempoBPM < 55 || first.BeatsPerLoop != 96 || len(first.Sections) != 6 || len(first.Notes) < 120 || len(first.Notes) > 320 {
 		t.Fatalf("invalid calm score: mood=%s tempo=%d beats=%d sections=%d notes=%d", first.Mood, first.TempoBPM, first.BeatsPerLoop, len(first.Sections), len(first.Notes))
 	}
 	threat, err := service.Compose(dataURL, semantic.SemanticAnalysis{Description: "A threatening violent scene."})
@@ -61,7 +61,7 @@ func TestMusicServiceCompose(t *testing.T) {
 		if index > 0 && note.Beat < first.Notes[index-1].Beat {
 			t.Fatal("score events are not sorted")
 		}
-		if note.Voice == "lead" && note.Beat > 60 {
+		if note.Voice == "lead" && note.Beat > 92 {
 			t.Fatal("the concluding bar should leave room for silence")
 		}
 	}
@@ -81,7 +81,7 @@ func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 func TestComposeMusicVariesTempo(t *testing.T) {
 	for _, description := range []string{"A serene landscape.", "A threatening scene.", "A lively dancing scene."} {
 		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: description}, [32]byte{})
-		if plan.Sections[0].TempoBPM != plan.TempoBPM || plan.Sections[2].TempoBPM <= plan.Sections[0].TempoBPM || plan.Sections[3].TempoBPM >= plan.Sections[2].TempoBPM {
+		if plan.Sections[0].TempoBPM != plan.TempoBPM || plan.Sections[2].TempoBPM <= plan.Sections[0].TempoBPM || plan.Sections[3].TempoBPM >= plan.Sections[2].TempoBPM || plan.Sections[4].TempoBPM <= plan.Sections[3].TempoBPM || plan.Sections[5].TempoBPM >= plan.Sections[4].TempoBPM {
 			t.Fatalf("tempo arc did not develop for %q: %+v", description, plan.Sections)
 		}
 		for _, section := range plan.Sections {
@@ -96,7 +96,7 @@ func TestComposeMusicVariesTempo(t *testing.T) {
 func TestComposeMusicResolvesHome(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
 	for _, note := range plan.Notes {
-		if note.Beat == 60 && note.Voice == "pad" && note.MIDI%12 == 0 {
+		if note.Beat == 92 && note.Voice == "pad" && note.MIDI%12 == 0 {
 			return
 		}
 	}
@@ -124,7 +124,7 @@ func TestVoiceChordPrefersNearInversion(t *testing.T) {
 func TestArpeggioBuildsAndRecedes(t *testing.T) {
 	calm := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
 	tense := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
-	if countVoiceInSection(calm, "arp", 0, 16) != 0 || countVoiceInSection(calm, "arp", 32, 48) == 0 || countVoiceInSection(calm, "arp", 56, 64) != 0 {
+	if countVoiceInSection(calm, "arp", 0, 16) != 0 || countVoiceInSection(calm, "arp", 32, 48) == 0 || countVoiceInSection(calm, "arp", 48, 64) != 0 || countVoiceInSection(calm, "arp", 88, 96) != 0 {
 		t.Fatal("the calm counterline did not follow the phrase arc")
 	}
 	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(calm, "arp", 32, 48) {
@@ -163,8 +163,22 @@ func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	if countVoiceInSection(plan, "lead", 32, 48) <= countVoiceInSection(plan, "lead", 16, 32) {
 		t.Fatal("the bridge should develop the melodic rhythm")
 	}
-	if countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 32, 48) {
+	if countVoiceInSection(plan, "lead", 80, 96) >= countVoiceInSection(plan, "lead", 32, 48) {
 		t.Fatal("the conclusion should leave more space than the bridge")
+	}
+}
+
+// TestMusicFormBreaksAndReturns checks that the interlude makes space before the returning theme regains its pulse.
+func TestMusicFormBreaksAndReturns(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A lively dancing scene."}, [32]byte{})
+	if plan.Sections[3].Label != "Interlude" || plan.Sections[4].Label != "Retour" {
+		t.Fatalf("missing form contrast: %+v", plan.Sections)
+	}
+	if countVoiceInSection(plan, "pulse", 48, 64) != 0 || countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 64, 80) || countVoiceInSection(plan, "pulse", 64, 80) == 0 {
+		t.Fatal("the interlude and return do not contrast")
+	}
+	if len(plan.Notes) > 320 {
+		t.Fatalf("score exceeds the player event limit: %d", len(plan.Notes))
 	}
 }
 
@@ -174,14 +188,14 @@ func TestExpressNotesPreservesAnchors(t *testing.T) {
 		{Beat: 0, Velocity: 0.3, Voice: "pad"},
 		{Beat: 0, Velocity: 0.6, Voice: "lead"},
 		{Beat: 3.99, Velocity: 0.4, Voice: "arp"},
-		{Beat: 60, Velocity: 0.6, Voice: "lead"},
+		{Beat: 92, Velocity: 0.6, Voice: "lead"},
 	}
 	var digest [32]byte
 	for index := range digest {
 		digest[index] = 255
 	}
-	expressNotes(notes, digest)
-	if notes[0].Beat != 0 || notes[0].Velocity != 0.3 || notes[1].Beat <= 0 || notes[2].Beat >= 4 || notes[3].Beat != 60 {
+	expressNotes(notes, digest, 92)
+	if notes[0].Beat != 0 || notes[0].Velocity != 0.3 || notes[1].Beat <= 0 || notes[2].Beat >= 4 || notes[3].Beat != 92 {
 		t.Fatalf("expression moved an anchor or crossed a bar: %+v", notes)
 	}
 }

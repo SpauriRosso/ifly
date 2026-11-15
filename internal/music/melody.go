@@ -8,7 +8,13 @@ func melodyRhythmForBar(bar, section int, complexity float64, character musicalC
 	if complexity < 0.28 && (character.mood == "calm" || character.mood == "neutral") && len(rhythm) > 2 {
 		rhythm = rhythm[:2]
 	}
-	if bar%4 == 3 || (section == 3 && bar%4 >= 2) {
+	if section == 3 {
+		if bar%2 == 1 {
+			return nil
+		}
+		return rhythm[:1]
+	}
+	if bar%4 == 3 || (section == 5 && bar%4 >= 2) {
 		return rhythm[:1]
 	}
 	if section == 1 && len(rhythm) > 1 && rhythm[len(rhythm)-1]-rhythm[len(rhythm)-2] > 0.6 {
@@ -45,7 +51,7 @@ func nearestMelodyRegister(pitch, previous int) int {
 }
 
 // melodyNotes takes one bar's harmony, motif, phrase position, and prior pitch, then returns its shaped lead events and final pitch.
-func melodyNotes(start float64, bar, section, root, chordRoot int, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
+func melodyNotes(start float64, bar, section, finalBar, root, chordRoot int, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
 	rhythm := melodyRhythmForBar(bar, section, complexity, character)
 	notes := make([]MusicNote, 0, len(rhythm))
 	for index, beat := range rhythm {
@@ -56,14 +62,17 @@ func melodyNotes(start float64, bar, section, root, chordRoot int, motif [4]int,
 		if section == 2 {
 			degree = (len(character.scale) + 4 - degree) % len(character.scale)
 		}
-		if section == 3 && index > 0 {
+		if section == 4 && index > 0 {
+			degree = (degree + 2) % len(character.scale)
+		}
+		if section == 5 && index > 0 {
 			degree = (degree + len(character.scale) - 1) % len(character.scale)
 		}
 		pitch := root + 12 + character.scale[degree]
 		if index == 0 {
 			pitch = chordRoot + 12
 		}
-		if bar == 15 {
+		if bar == finalBar {
 			pitch = root + 12
 		}
 		pitch = nearestMelodyRegister(pitch, previousPitch)
@@ -71,7 +80,7 @@ func melodyNotes(start float64, bar, section, root, chordRoot int, motif [4]int,
 		duration := 1.2
 		if index+1 < len(rhythm) {
 			duration = math.Min(1.5, rhythm[index+1]-beat-0.12)
-		} else if bar == 15 {
+		} else if bar == finalBar {
 			duration = 1.6
 		} else if bar%4 == 3 {
 			duration = 2.2
