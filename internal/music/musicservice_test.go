@@ -117,6 +117,31 @@ func TestArpeggioBuildsAndRecedes(t *testing.T) {
 	}
 }
 
+// TestMelodyDevelopsWithoutRegisterJumps checks that the reprise changes the theme while consecutive pitches stay nearby.
+func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	opening := []int{}
+	reprise := []int{}
+	previous := 0
+	for _, note := range plan.Notes {
+		if note.Voice != "lead" {
+			continue
+		}
+		if previous != 0 && (note.MIDI-previous > 12 || previous-note.MIDI > 12) {
+			t.Fatalf("melody jumped too far from %d to %d", previous, note.MIDI)
+		}
+		previous = note.MIDI
+		if note.Beat < 16 {
+			opening = append(opening, note.MIDI)
+		} else if note.Beat < 32 {
+			reprise = append(reprise, note.MIDI)
+		}
+	}
+	if len(opening) == 0 || len(opening) != len(reprise) || reflect.DeepEqual(opening, reprise) {
+		t.Fatalf("the reprise did not develop the opening motif: %v / %v", opening, reprise)
+	}
+}
+
 // TestMusicServiceComposeRejectsInvalidImage checks that the score cannot be generated from an unbounded or malformed image.
 func TestMusicServiceComposeRejectsInvalidImage(t *testing.T) {
 	if _, err := (&MusicService{}).Compose("data:image/png;base64,AA==", semantic.SemanticAnalysis{}); err == nil {

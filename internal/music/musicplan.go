@@ -65,6 +65,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	}
 	notes := make([]MusicNote, 0, 176)
 	var previousVoicing [3]int
+	previousLeadPitch := 0
 	for bar := 0; bar < 16; bar++ {
 		start := float64(bar * 4)
 		section := bar / 4
@@ -106,42 +107,9 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 				notes = append(notes, MusicNote{start + beat, 0.18, root, 0.32 * energy, "pulse"})
 			}
 		}
-		rhythm := character.melodyRhythm[bar%2]
-		if complexity < 0.28 && (character.mood == "calm" || character.mood == "neutral") && len(rhythm) > 2 {
-			rhythm = rhythm[:2]
-		}
-		if bar%4 == 3 {
-			rhythm = rhythm[:1]
-		}
-		for index, beat := range rhythm {
-			degree := motif[(bar%2*2+index)%len(motif)]
-			if section == 1 && index == len(rhythm)-1 {
-				degree = (degree + 1) % len(character.scale)
-			}
-			if section == 2 {
-				degree = (len(character.scale) + 4 - degree) % len(character.scale)
-			}
-			pitch := root + 12 + character.scale[degree]
-			if index == 0 {
-				pitch = chordRoot + 12
-			}
-			if bar == 15 {
-				pitch = root + 12
-			}
-			duration := 1.2
-			if index+1 < len(rhythm) {
-				duration = math.Min(1.5, rhythm[index+1]-beat-0.12)
-			} else if bar == 15 {
-				duration = 1.6
-			} else if bar%4 == 3 {
-				duration = 2.2
-			}
-			velocity := 0.57 * energy
-			if index == 0 {
-				velocity *= 1.18
-			}
-			notes = append(notes, MusicNote{start + beat, duration, pitch, velocity, "lead"})
-		}
+		lead, finalPitch := melodyNotes(start, bar, section, root, chordRoot, motif, previousLeadPitch, energy, complexity, character)
+		notes = append(notes, lead...)
+		previousLeadPitch = finalPitch
 	}
 	sort.SliceStable(notes, func(i, j int) bool { return notes[i].Beat < notes[j].Beat })
 	return MusicPlan{Mood: character.mood, Mode: character.mode, Timbre: character.timbre, TempoBPM: tempo, BeatsPerLoop: 64, Sections: sections, Notes: notes}

@@ -1,0 +1,75 @@
+package music
+
+import "math"
+
+// nearestMelodyRegister takes a pitch class in a chosen octave and the previous note, then returns its closest playable octave.
+func nearestMelodyRegister(pitch, previous int) int {
+	if previous == 0 {
+		return pitch
+	}
+	best := pitch
+	bestDistance := math.MaxInt
+	for octave := -12; octave <= 12; octave += 12 {
+		candidate := pitch + octave
+		if candidate < 55 || candidate > 84 {
+			continue
+		}
+		distance := candidate - previous
+		if distance < 0 {
+			distance = -distance
+		}
+		if distance < bestDistance {
+			best, bestDistance = candidate, distance
+		}
+	}
+	return best
+}
+
+// melodyNotes takes one bar's harmony, motif, phrase position, and prior pitch, then returns its shaped lead events and final pitch.
+func melodyNotes(start float64, bar, section, root, chordRoot int, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
+	rhythm := character.melodyRhythm[bar%2]
+	if complexity < 0.28 && (character.mood == "calm" || character.mood == "neutral") && len(rhythm) > 2 {
+		rhythm = rhythm[:2]
+	}
+	if bar%4 == 3 {
+		rhythm = rhythm[:1]
+	}
+	notes := make([]MusicNote, 0, len(rhythm))
+	for index, beat := range rhythm {
+		degree := motif[(bar%2*2+index)%len(motif)]
+		if section == 1 && index > 0 {
+			degree = (degree + 1) % len(character.scale)
+		}
+		if section == 2 {
+			degree = (len(character.scale) + 4 - degree) % len(character.scale)
+		}
+		if section == 3 && index > 0 {
+			degree = (degree + len(character.scale) - 1) % len(character.scale)
+		}
+		pitch := root + 12 + character.scale[degree]
+		if index == 0 {
+			pitch = chordRoot + 12
+		}
+		if bar == 15 {
+			pitch = root + 12
+		}
+		pitch = nearestMelodyRegister(pitch, previousPitch)
+		previousPitch = pitch
+		duration := 1.2
+		if index+1 < len(rhythm) {
+			duration = math.Min(1.5, rhythm[index+1]-beat-0.12)
+		} else if bar == 15 {
+			duration = 1.6
+		} else if bar%4 == 3 {
+			duration = 2.2
+		}
+		velocity := 0.57 * energy
+		if index == 0 {
+			velocity *= 1.18
+		} else if index == len(rhythm)-1 {
+			velocity *= 0.82
+		}
+		notes = append(notes, MusicNote{Beat: start + beat, Duration: duration, MIDI: pitch, Velocity: velocity, Voice: "lead"})
+	}
+	return notes, previousPitch
+}
