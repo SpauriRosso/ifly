@@ -111,6 +111,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		notes = append(notes, lead...)
 		previousLeadPitch = finalPitch
 	}
+	expressNotes(notes, digest)
 	sort.SliceStable(notes, func(i, j int) bool { return notes[i].Beat < notes[j].Beat })
 	return MusicPlan{Mood: character.mood, Mode: character.mode, Timbre: character.timbre, TempoBPM: tempo, BeatsPerLoop: 64, Sections: sections, Notes: notes}
 }

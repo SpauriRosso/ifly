@@ -153,6 +153,24 @@ func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	}
 }
 
+// TestExpressNotesPreservesAnchors checks that humanized melody timing stays in its bar while sustained chords remain aligned.
+func TestExpressNotesPreservesAnchors(t *testing.T) {
+	notes := []MusicNote{
+		{Beat: 0, Velocity: 0.3, Voice: "pad"},
+		{Beat: 0, Velocity: 0.6, Voice: "lead"},
+		{Beat: 3.99, Velocity: 0.4, Voice: "arp"},
+		{Beat: 60, Velocity: 0.6, Voice: "lead"},
+	}
+	var digest [32]byte
+	for index := range digest {
+		digest[index] = 255
+	}
+	expressNotes(notes, digest)
+	if notes[0].Beat != 0 || notes[0].Velocity != 0.3 || notes[1].Beat <= 0 || notes[2].Beat >= 4 || notes[3].Beat != 60 {
+		t.Fatalf("expression moved an anchor or crossed a bar: %+v", notes)
+	}
+}
+
 // TestMusicServiceComposeRejectsInvalidImage checks that the score cannot be generated from an unbounded or malformed image.
 func TestMusicServiceComposeRejectsInvalidImage(t *testing.T) {
 	if _, err := (&MusicService{}).Compose("data:image/png;base64,AA==", semantic.SemanticAnalysis{}); err == nil {
