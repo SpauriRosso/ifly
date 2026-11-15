@@ -64,6 +64,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		{Label: "Conclusion", StartBeat: 48, EndBeat: 64, Energy: 0.76},
 	}
 	notes := make([]MusicNote, 0, 176)
+	var previousVoicing [3]int
 	for bar := 0; bar < 16; bar++ {
 		start := float64(bar * 4)
 		section := bar / 4
@@ -84,8 +85,10 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		if bar == 15 {
 			padLength = 2.3
 		}
-		for _, interval := range []int{0, chord.third, 7} {
-			notes = append(notes, MusicNote{start, padLength, chordRoot + interval, 0.3 * energy, "pad"})
+		voicing := voiceChord(chordRoot, chord.third, previousVoicing, bar > 0)
+		previousVoicing = voicing
+		for _, pitch := range voicing {
+			notes = append(notes, MusicNote{start, padLength, pitch, 0.3 * energy, "pad"})
 		}
 		for _, beat := range character.bassBeats {
 			if bar == 15 && beat > 0 {
@@ -129,6 +132,8 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 				duration = math.Min(1.5, rhythm[index+1]-beat-0.12)
 			} else if bar == 15 {
 				duration = 1.6
+			} else if bar%4 == 3 {
+				duration = 2.2
 			}
 			velocity := 0.57 * energy
 			if index == 0 {

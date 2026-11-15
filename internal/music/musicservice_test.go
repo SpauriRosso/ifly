@@ -70,11 +70,28 @@ func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 func TestComposeMusicResolvesHome(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
 	for _, note := range plan.Notes {
-		if note.Beat == 60 && note.Voice == "pad" && note.MIDI == 48 {
+		if note.Beat == 60 && note.Voice == "pad" && note.MIDI%12 == 0 {
 			return
 		}
 	}
 	t.Fatal("final harmony did not resolve to the tonic")
+}
+
+// TestVoiceChordPrefersNearInversion checks that chord voices move less than a root-position block change.
+func TestVoiceChordPrefersNearInversion(t *testing.T) {
+	first := voiceChord(48, 4, [3]int{}, false)
+	second := voiceChord(53, 4, first, true)
+	motion := 0
+	for note := range first {
+		delta := first[note] - second[note]
+		if delta < 0 {
+			delta = -delta
+		}
+		motion += delta
+	}
+	if motion >= 15 {
+		t.Fatalf("chord motion is too large: %v to %v", first, second)
+	}
 }
 
 // TestMusicServiceComposeRejectsInvalidImage checks that the score cannot be generated from an unbounded or malformed image.
