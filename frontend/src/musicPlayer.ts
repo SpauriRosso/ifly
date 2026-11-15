@@ -1,4 +1,6 @@
 import type { MusicNote, MusicPlan } from '../bindings/ifly/internal/music/models'
+import { nearestSample, sampleKey } from './musicInstruments'
+import { loadInstrumentSamples, type LoadedSample } from './musicSamples'
 import { TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
 
 // seededNoise takes an image seed and returns a reproducible stream of audio samples between minus one and one.
@@ -47,6 +49,8 @@ export class MusicPlayer {
   private room: ConvolverNode | null = null
   private profile: TimbreProfile | null = null
   private pulseBuffer: AudioBuffer | null = null
+  private samples = new Map<string, LoadedSample>()
+  private loadController: AbortController | null = null
   private timer: number | null = null
   private notes: MusicNote[] = []
   private secondsPerBeat = 0
@@ -91,14 +95,19 @@ export class MusicPlayer {
     this.room = room
     this.profile = profile
     this.pulseBuffer = createPulseBuffer(context, plan.seed)
+    const loadController = new AbortController()
+    this.loadController = loadController
     this.notes = notes
     this.secondsPerBeat = 60 / plan.tempoBpm
     this.loopDuration = plan.beatsPerLoop * this.secondsPerBeat
-    this.loopStart = context.currentTime + 0.08
     this.nextNote = 0
     try {
       await context.resume()
+      const samples = await loadInstrumentSamples(context, notes, profile, loadController.signal)
       if (this.context !== context) return
+      this.samples = samples
+      this.loadController = null
+      this.loopStart = context.currentTime + 0.08
       this.schedule()
       this.timer = window.setInterval(() => this.schedule(), 75)
     } catch (cause) {
@@ -132,6 +141,9 @@ export class MusicPlayer {
     this.room = null
     this.profile = null
     this.pulseBuffer = null
+    this.samples.clear()
+    this.loadController?.abort()
+    this.loadController = null
     this.notes = []
     if (!context) return
     if (context.state === 'running' && master) {
@@ -159,7 +171,7 @@ export class MusicPlayer {
     }
   }
 
-  // playNote takes one scheduled event, shapes its voice and echo, and disconnects the finished audio nodes.
+  // playNote takes one scheduled event, transposes its instrument sample, shapes its envelope, and releases its audio nodes.
   private playNote(note: MusicNote, at: number): void {
     const context = this.context
     const master = this.master
@@ -172,16 +184,23 @@ export class MusicPlayer {
     }
     const timbre = profile.voices[voice]
     if (!timbre) return
-    const oscillator = context.createOscillator()
+    const anchor = nearestSample(timbre.instrument, note.midi)
+    const sample = this.samples.get(sampleKey(timbre.instrument, anchor))
+    if (!sample) return
+    const source = context.createBufferSource()
     const envelope = context.createGain()
     const filter = context.createBiquadFilter()
     const duration = Math.max(0.1, Math.min(8, note.duration * this.secondsPerBeat))
     const attack = Math.min(timbre.attack, duration * 0.3)
     const release = Math.min(timbre.release, duration * 0.4)
     const level = note.velocity * timbre.gain
-    const frequency = 440 * 2 ** ((note.midi - 69) / 12)
-    oscillator.type = timbre.wave
-    oscillator.frequency.setValueAtTime(frequency, at)
+    source.buffer = sample.buffer
+    source.playbackRate.setValueAtTime(2 ** ((note.midi - anchor.midi) / 12), at)
+    if (sample.loopEnd > sample.loopStart) {
+      source.loop = true
+      source.loopStart = sample.loopStart
+      source.loopEnd = sample.loopEnd
+    }
     filter.type = 'lowpass'
     filter.frequency.setValueAtTime(timbre.cutoff, at)
     if (voice === 'lead' || voice === 'bass' || voice === 'arp') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
@@ -193,54 +212,34 @@ export class MusicPlayer {
       envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, level * 0.38), at + duration - release)
     }
     envelope.gain.linearRampToValueAtTime(0, at + duration)
-    oscillator.connect(envelope).connect(filter)
+    source.connect(envelope).connect(filter)
     filter.connect(master)
     if (this.echo && (voice === 'pad' || voice === 'lead' || voice === 'arp')) filter.connect(this.echo)
     if (this.room && (voice === 'pad' || voice === 'lead' || voice === 'arp')) filter.connect(this.room)
-    let secondary: OscillatorNode | null = null
-    let harmonicGain: GainNode | null = null
-    if (voice === 'pad') {
-      secondary = context.createOscillator()
-      secondary.type = timbre.wave
-      secondary.frequency.value = frequency
-      secondary.detune.value = 5
-      secondary.connect(envelope)
-      secondary.start(at)
-      secondary.stop(at + duration + 0.01)
-    } else if (voice === 'lead') {
-      secondary = context.createOscillator()
-      harmonicGain = context.createGain()
-      secondary.type = 'sine'
-      secondary.frequency.value = frequency * 2
-      harmonicGain.gain.value = 0.18
-      secondary.connect(harmonicGain).connect(envelope)
-      secondary.start(at)
-      secondary.stop(at + duration + 0.01)
-    }
-    oscillator.onended = () => {
-      oscillator.disconnect()
-      secondary?.disconnect()
-      harmonicGain?.disconnect()
+    source.onended = () => {
+      source.disconnect()
       envelope.disconnect()
       filter.disconnect()
     }
-    oscillator.start(at)
-    oscillator.stop(at + duration + 0.01)
+    source.start(at)
+    source.stop(at + duration + 0.01)
   }
 
-  // playPulse takes one rhythmic event and plays a short filtered noise hit through the main output.
+  // playPulse takes one rhythmic event and plays either its local drum sample or a short filtered noise hit.
   private playPulse(note: MusicNote, at: number): void {
     const context = this.context
     const master = this.master
     const timbre = this.profile?.voices.pulse
-    const buffer = this.pulseBuffer
+    const instrument = timbre?.instrument
+    const sample = instrument ? this.samples.get(sampleKey(instrument, nearestSample(instrument, note.midi))) : null
+    const buffer = sample?.buffer ?? this.pulseBuffer
     if (!context || !master || !timbre || !buffer) return
     const source = context.createBufferSource()
     const filter = context.createBiquadFilter()
     const envelope = context.createGain()
-    const duration = Math.max(0.04, Math.min(0.16, note.duration * this.secondsPerBeat))
+    const duration = sample ? Math.min(0.65, buffer.duration) : Math.max(0.04, Math.min(0.16, note.duration * this.secondsPerBeat))
     source.buffer = buffer
-    filter.type = 'highpass'
+    filter.type = sample ? 'lowpass' : 'highpass'
     filter.frequency.value = timbre.cutoff
     filter.Q.value = 0.7
     envelope.gain.setValueAtTime(0, at)
