@@ -1,9 +1,10 @@
-export type InstrumentId = 'piano' | 'guitar' | 'bass' | 'violin' | 'cello' | 'flute' | 'woodblock' | 'timpani'
+export type InstrumentId = 'piano' | 'guitar' | 'bass' | 'violin' | 'cello' | 'flute' | 'voice' | 'woodblock' | 'timpani'
 
 // INSTRUMENT_LABELS gives the automatic score palette short, user-facing names.
 export const INSTRUMENT_LABELS: Record<InstrumentId, string> = {
   piano: 'Piano', guitar: 'Guitare', bass: 'Contrebasse', violin: 'Violon',
   cello: 'Violoncelle', flute: 'Flûte', woodblock: 'Woodblock', timpani: 'Timbales',
+  voice: 'Voix ooh',
 }
 
 export interface InstrumentSample {
@@ -40,6 +41,10 @@ export const INSTRUMENTS: Record<InstrumentId, InstrumentDefinition> = {
     { midi: 69, file: 'A4' }, { midi: 76, file: 'E5' },
   ] },
   flute: { folder: 'flute', sustain: true, samples: [
+    { midi: 60, file: 'C4' }, { midi: 67, file: 'G4' }, { midi: 74, file: 'D5' },
+    { midi: 81, file: 'A5' }, { midi: 88, file: 'E6' },
+  ] },
+  voice: { folder: 'voice_oohs', sustain: true, samples: [
     { midi: 60, file: 'C4' }, { midi: 67, file: 'G4' }, { midi: 74, file: 'D5' },
     { midi: 81, file: 'A5' }, { midi: 88, file: 'E6' },
   ] },
