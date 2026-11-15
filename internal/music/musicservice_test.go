@@ -182,6 +182,21 @@ func TestMusicFormBreaksAndReturns(t *testing.T) {
 	}
 }
 
+// TestHummingDependsOnScene checks that the vocal response is sparse and appears only for suitable interpreted artwork.
+func TestHummingDependsOnScene(t *testing.T) {
+	quiet := analysis.StructuralAnalysis{Complexity: 0.2}
+	calm := composeMusic(quiet, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	person := composeMusic(quiet, semantic.SemanticAnalysis{Description: "A drawing of a stick figure."}, [32]byte{})
+	threat := composeMusic(quiet, semantic.SemanticAnalysis{Description: "A threatening violent scene."}, [32]byte{})
+	busy := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	if countVoiceInSection(calm, "hum", 48, 64) != 2 || countVoiceInSection(person, "hum", 48, 64) != 2 {
+		t.Fatal("suitable calm or human scenes need a sparse vocal response")
+	}
+	if countVoiceInSection(threat, "hum", 0, 96) != 0 || countVoiceInSection(busy, "hum", 0, 96) != 0 {
+		t.Fatal("vocal response should be omitted for tense or complex scenes")
+	}
+}
+
 // TestExpressNotesPreservesAnchors checks that humanized melody timing stays in its bar while sustained chords remain aligned.
 func TestExpressNotesPreservesAnchors(t *testing.T) {
 	notes := []MusicNote{

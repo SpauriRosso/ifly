@@ -50,6 +50,7 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 // composeMusic takes measured structure, tentative semantics, and an image digest and returns a six-phrase score.
 func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic.SemanticAnalysis, digest [32]byte) MusicPlan {
 	character := selectMusicalCharacter(interpretation)
+	useHum := shouldHum(structure, interpretation, character)
 	complexity := math.Max(0, math.Min(1, structure.Complexity))
 	tempo := character.baseTempo + int(math.Round(10*complexity))
 	root := 48 + int(digest[0]%12)
@@ -120,6 +121,9 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chordRoot, motif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
 		previousLeadPitch = finalPitch
+		if useHum {
+			notes = append(notes, hummingNotes(start, section, bar, root, character.scale, energy)...)
+		}
 	}
 	expressNotes(notes, digest, float64(finalBar*4))
 	sort.SliceStable(notes, func(i, j int) bool { return notes[i].Beat < notes[j].Beat })
