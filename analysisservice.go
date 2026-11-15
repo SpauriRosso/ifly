@@ -25,22 +25,31 @@ type AnalysisService struct{}
 
 // Analyze decodes a small PNG data URL and returns deterministic visual measurements or an error.
 func (s *AnalysisService) Analyze(dataURL string) (StructuralAnalysis, error) {
-	if len(dataURL) > 2_000_000 || !strings.HasPrefix(dataURL, "data:image/png;base64,") {
-		return StructuralAnalysis{}, errors.New("invalid analysis image")
-	}
-	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, "data:image/png;base64,"))
-	if err != nil {
-		return StructuralAnalysis{}, err
-	}
-	config, format, err := image.DecodeConfig(bytes.NewReader(raw))
-	if err != nil || format != "png" || config.Width < 1 || config.Height < 1 || config.Width > 256 || config.Height > 256 {
-		return StructuralAnalysis{}, errors.New("invalid analysis dimensions")
-	}
-	img, _, err := image.Decode(bytes.NewReader(raw))
+	img, err := decodeAnalysisImage(dataURL)
 	if err != nil {
 		return StructuralAnalysis{}, err
 	}
 	return measureImage(img), nil
+}
+
+// decodeAnalysisImage validates and decodes a bounded PNG shared by structural and semantic services.
+func decodeAnalysisImage(dataURL string) (image.Image, error) {
+	if len(dataURL) > 2_000_000 || !strings.HasPrefix(dataURL, "data:image/png;base64,") {
+		return nil, errors.New("invalid analysis image")
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(dataURL, "data:image/png;base64,"))
+	if err != nil {
+		return nil, err
+	}
+	config, format, err := image.DecodeConfig(bytes.NewReader(raw))
+	if err != nil || format != "png" || config.Width < 1 || config.Height < 1 || config.Width > 256 || config.Height > 256 {
+		return nil, errors.New("invalid analysis dimensions")
+	}
+	img, _, err := image.Decode(bytes.NewReader(raw))
+	if err != nil {
+		return nil, err
+	}
+	return img, nil
 }
 
 // measureImage samples pixels, adjacent luminance changes, and quantized colors to describe image structure.
