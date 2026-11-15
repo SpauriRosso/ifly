@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { StructuralAnalysis } from '../bindings/changeme/models'
 import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
+import { createEdgePreview } from './edgePreview'
 import './app.css'
 
 // percent formats a normalized metric for the diagnostic panel.
@@ -13,10 +14,13 @@ function percent(value: number): string {
 function App() {
   const [image, setImage] = useState<ImageData | null>(null)
   const [analysis, setAnalysis] = useState<StructuralAnalysis | null>(null)
+  const [edgeUrl, setEdgeUrl] = useState<string | null>(null)
+  const [showEdges, setShowEdges] = useState(false)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState<'import' | 'analysis' | null>(null)
+  const [busy, setBusy] = useState<'import' | 'analysis' | 'edges' | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<ImageData | null>(null)
+  const edgeRef = useRef<string | null>(null)
   const generation = useRef(0)
 
   // importFile validates a new image and discards results from any earlier import or analysis.
@@ -25,6 +29,10 @@ function App() {
     setBusy('import')
     setError('')
     setAnalysis(null)
+    setShowEdges(false)
+    setEdgeUrl(null)
+    if (edgeRef.current) URL.revokeObjectURL(edgeRef.current)
+    edgeRef.current = null
     try {
       const next = await loadImage(file)
       if (current !== generation.current) {
@@ -71,9 +79,40 @@ function App() {
     }
   }
 
+  // toggleEdges alternates between the source image and a locally derived contour map.
+  async function toggleEdges() {
+    if (showEdges) {
+      setShowEdges(false)
+      return
+    }
+    if (edgeUrl) {
+      setShowEdges(true)
+      return
+    }
+    if (!imageRef.current || !analysis || busy) return
+    const current = generation.current
+    setBusy('edges')
+    setError('')
+    try {
+      const next = await createEdgePreview(imageRef.current.url)
+      if (current !== generation.current) {
+        URL.revokeObjectURL(next)
+        return
+      }
+      edgeRef.current = next
+      setEdgeUrl(next)
+      setShowEdges(true)
+    } catch (cause) {
+      if (current === generation.current) setError(cause instanceof Error ? cause.message : 'Impossible de préparer les contours.')
+    } finally {
+      if (current === generation.current) setBusy(null)
+    }
+  }
+
   useEffect(() => () => {
     generation.current++
     if (imageRef.current) URL.revokeObjectURL(imageRef.current.url)
+    if (edgeRef.current) URL.revokeObjectURL(edgeRef.current)
   }, [])
 
   return <main className="app-shell" onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
@@ -102,9 +141,9 @@ function App() {
         <div className="play-state" title="La composition musicale sera disponible après l’analyse sémantique locale">▶ <span>Lecture à venir</span></div>
       </div>
       <div className="canvas-area">
-        {image ? <img src={image.url} alt={`Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Déposez une image sur le plan de travail</strong><span>PNG, JPEG ou WebP · 20 Mo maximum</span></div>}
+        {image ? <img src={showEdges && edgeUrl ? edgeUrl : image.url} alt={showEdges ? `Carte des contours de ${image.fileName}` : `Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Déposez une image sur le plan de travail</strong><span>PNG, JPEG ou WebP · 20 Mo maximum</span></div>}
       </div>
-      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{busy === 'analysis' ? 'Analyse locale en cours' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
+      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Analyse locale en cours' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
     </section>
 
     <aside className="inspector" aria-label="Analyse et propriétés">
@@ -123,7 +162,7 @@ function App() {
           <div><span>Contours</span><strong>{percent(analysis.edgeDensity)}</strong></div>
           <div><span>Couleurs</span><strong>{percent(analysis.colorDiversity)}</strong></div>
           <div><span>Complexité</span><strong>{percent(analysis.complexity)}</strong></div>
-        </div><p className="analysis-note">Mesures locales sans interprétation du sujet ni de l’émotion.</p></>}
+        </div><p className="analysis-note">Mesures locales sans interprétation du sujet ni de l’émotion.</p><button className="edge-button" onClick={() => void toggleEdges()} disabled={busy === 'edges'}>{busy === 'edges' ? 'Préparation…' : showEdges ? 'Revoir l’image' : 'Voir les contours'}</button></>}
       </section>
       <section className="inspector-section next-section">
         <h2>Suite de l’expérience</h2>
