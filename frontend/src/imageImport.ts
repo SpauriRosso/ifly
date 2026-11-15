@@ -73,14 +73,16 @@ export async function loadImage(file: File): Promise<ImageData> {
     throw new Error('Dimensions trop grandes : maximum 8 192 pixels par côté et 24 mégapixels.')
   }
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  const decodedWidth = bitmap.width
+  const decodedHeight = bitmap.height
   try {
-    const normal = bitmap.width === width && bitmap.height === height
-    const rotated = bitmap.width === height && bitmap.height === width
-    if (bitmap.width * bitmap.height > MAX_PIXELS || (!normal && !rotated)) {
+    const normal = decodedWidth === width && decodedHeight === height
+    const rotated = decodedWidth === height && decodedHeight === width
+    if (decodedWidth * decodedHeight > MAX_PIXELS || (!normal && !rotated)) {
       throw new Error('Les dimensions décodées ne correspondent pas à une image prise en charge.')
     }
   } finally {
     bitmap.close()
   }
-  return { fileName: file.name, format: details.format, width: bitmap.width, height: bitmap.height, byteSize: file.size, url: URL.createObjectURL(file) }
+  return { fileName: file.name, format: details.format, width: decodedWidth, height: decodedHeight, byteSize: file.size, url: URL.createObjectURL(file) }
 }
