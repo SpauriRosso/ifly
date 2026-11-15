@@ -77,42 +77,60 @@ function App() {
   }, [])
 
   return <main className="app-shell" onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
-    <aside className="tool-rail" aria-label="Étapes du laboratoire">
+    <header className="app-header">
       <div className="brand">IFLY<span>.</span></div>
-      <div className="rail-caption">LABORATOIRE<br />PROTOTYPE B</div>
-      <div className="rail-separator" />
-      <div className="step active"><span className="step-number">01</span><div><strong>Image</strong><small>Importer et observer</small></div></div>
-      <div className={`step ${analysis ? 'active' : ''}`}><span className="step-number">02</span><div><strong>Structure</strong><small>Mesures locales</small></div></div>
-      <div className="step muted"><span className="step-number">03</span><div><strong>Sens & musique</strong><small>À construire</small></div></div>
-      <div className="rail-bottom">L’œuvre reste modifiable dans ce laboratoire. Aucune validation définitive n’est encore proposée.</div>
+      <span className="header-divider" />
+      <span className="header-title">Atelier d’image</span>
+      <span className="header-file">{image?.fileName ?? 'Aucune œuvre ouverte'}</span>
+      <span className="header-mode">LABORATOIRE B</span>
+    </header>
+
+    <aside className="tool-rail" aria-label="Outils">
+      <button className="rail-tool selected" title="Importer une image" aria-label="Importer une image" onClick={() => inputRef.current?.click()}>▣<small>Import</small></button>
+      <button className="rail-tool" title="Analyser l’image" aria-label="Analyser l’image" onClick={() => void runAnalysis()} disabled={!image || busy !== null}>◈<small>Analyse</small></button>
+      <div className="rail-divider" />
+      <span className="rail-hint" title="Les outils de dessin arriveront dans le prototype A">Outils de dessin à venir</span>
     </aside>
 
     <section className="stage" aria-label="Œuvre importée">
-      <header className="stage-toolbar">
+      <div className="stage-toolbar">
         <div className="toolbar-actions">
           <button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy === 'import'}>{image ? 'Changer l’image' : 'Importer une image'}</button>
           <button className="button" onClick={() => void runAnalysis()} disabled={!image || busy !== null}>{busy === 'analysis' ? 'Analyse en cours…' : 'Analyser'}</button>
           <input ref={inputRef} type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" onChange={handleSelection} className="visually-hidden" aria-label="Choisir une image" />
         </div>
-        <div className="play-state" title="La lecture sera disponible après l’intégration de la composition musicale">▶ &nbsp; Lecture indisponible</div>
-      </header>
-      <div className="canvas-area">
-        {image ? <img src={image.url} alt={`Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Votre image commence ici</strong><span>Importez un PNG, JPEG ou WebP, ou glissez-le dans cette fenêtre.</span></div>}
+        <div className="play-state" title="La composition musicale sera disponible après l’analyse sémantique locale">▶ <span>Lecture à venir</span></div>
       </div>
-      <section className="inspection" aria-label="Diagnostic">
-        <div className="inspection-heading"><strong>DIAGNOSTIC</strong><span>{image ? image.fileName : 'Aucune image'}</span></div>
+      <div className="canvas-area">
+        {image ? <img src={image.url} alt={`Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Déposez une image sur le plan de travail</strong><span>PNG, JPEG ou WebP · 20 Mo maximum</span></div>}
+      </div>
+      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{busy === 'analysis' ? 'Analyse locale en cours' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
+    </section>
+
+    <aside className="inspector" aria-label="Analyse et propriétés">
+      <div className="inspector-tabs"><strong>PROPRIÉTÉS</strong><span>ANALYSE</span></div>
+      <section className="inspector-section">
+        <h2>Document</h2>
+        {image ? <dl className="document-facts"><div><dt>Nom</dt><dd title={image.fileName}>{image.fileName}</dd></div><div><dt>Dimensions</dt><dd>{image.width} × {image.height}</dd></div><div><dt>Taille</dt><dd>{(image.byteSize / 1024 / 1024).toFixed(2)} Mo</dd></div></dl> : <p className="hint">Importez une image pour commencer.</p>}
+      </section>
+      <section className="inspector-section">
+        <h2>Structure visuelle</h2>
         {error && <p className="error" role="alert">{error}</p>}
-        {!image && <p className="hint">L’image occupera cet espace. L’analyse structurelle sera disponible après import.</p>}
-        {image && !analysis && !error && <p className="hint">{image.format} · {image.width} × {image.height} px · {(image.byteSize / 1024 / 1024).toFixed(2)} Mo — Cliquez sur « Analyser » pour mesurer la structure.</p>}
+        {!analysis && <p className="hint">{image ? 'Cliquez sur Analyser pour mesurer cette image.' : 'Les mesures apparaîtront ici.'}</p>}
         {analysis && <><div className="metric-grid">
           <div><span>Luminosité</span><strong>{percent(analysis.brightness)}</strong></div>
           <div><span>Contraste</span><strong>{percent(analysis.contrast)}</strong></div>
           <div><span>Contours</span><strong>{percent(analysis.edgeDensity)}</strong></div>
           <div><span>Couleurs</span><strong>{percent(analysis.colorDiversity)}</strong></div>
           <div><span>Complexité</span><strong>{percent(analysis.complexity)}</strong></div>
-        </div><p className="analysis-note">Mesures visuelles locales uniquement. La description du sujet et de l’atmosphère nécessite encore un modèle installé localement.</p></>}
+        </div><p className="analysis-note">Mesures locales sans interprétation du sujet ni de l’émotion.</p></>}
       </section>
-    </section>
+      <section className="inspector-section next-section">
+        <h2>Suite de l’expérience</h2>
+        <p className="hint">{analysis ? 'Prochaine étape : intégrer et évaluer un modèle visuel local pour comprendre le sujet et l’atmosphère. La musique viendra après ce test.' : 'Analysez l’image pour préparer son interprétation.'}</p>
+        <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span>02 · Sens</span><span>03 · Musique</span><span>04 · Évolution</span></div>
+      </section>
+    </aside>
   </main>
 }
 
