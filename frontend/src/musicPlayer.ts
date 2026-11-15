@@ -62,7 +62,7 @@ export class MusicPlayer {
   // start takes a validated score, opens audio during the user's click, and begins its repeating phrase.
   async start(plan: MusicPlan): Promise<void> {
     if (this.context) throw new Error('Une lecture est déjà active.')
-    if (!plan.notes?.length || plan.notes.length > 256 || plan.tempoBpm < 40 || plan.tempoBpm > 180 || plan.beatsPerLoop < 4 || plan.beatsPerLoop > 128) {
+    if (!plan.notes?.length || plan.notes.length > 320 || plan.tempoBpm < 40 || plan.tempoBpm > 180 || plan.beatsPerLoop < 4 || plan.beatsPerLoop > 128) {
       throw new Error('Le plan musical est invalide.')
     }
     const tempoMap = createTempoMap(plan.sections, plan.beatsPerLoop)

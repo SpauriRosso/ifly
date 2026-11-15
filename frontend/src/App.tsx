@@ -10,6 +10,7 @@ import { composePreview } from './musicPreview'
 import { MusicPlayer } from './musicPlayer'
 import { INSTRUMENT_LABELS } from './musicInstruments'
 import { TIMBRES, type MusicVoice } from './musicTimbres'
+import { createTempoMap } from './musicTiming'
 import './app.css'
 
 const MOOD_LABELS: Record<string, string> = { calm: 'Calme', tense: 'Tendue', energetic: 'Énergique', neutral: 'Neutre' }
@@ -23,9 +24,15 @@ function percent(value: number): string {
 
 // describeMusicForm takes a generated plan and returns its phrase labels and approximate loop duration in French.
 function describeMusicForm(plan: MusicPlan): string {
-  const seconds = Math.round(plan.beatsPerLoop * 60 / plan.tempoBpm)
+  const seconds = Math.round(createTempoMap(plan.sections, plan.beatsPerLoop).loopSeconds)
   const duration = seconds >= 60 ? `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, '0')} s` : `${seconds} s`
   return `${plan.sections?.map(section => section.label).join(' → ') ?? 'Forme indisponible'} · ${duration}`
+}
+
+// describeTempoRange takes a score and returns the slowest and fastest phrase tempos for its inspector summary.
+function describeTempoRange(plan: MusicPlan): string {
+  const tempi = plan.sections?.map(section => section.tempoBpm) ?? [plan.tempoBpm]
+  return `${Math.min(...tempi)}–${Math.max(...tempi)} BPM`
 }
 
 // describeInstrumentPalette takes a score and returns the names of only the instruments actually present in its notes.
@@ -298,7 +305,7 @@ function App() {
       <section className="inspector-section music-section">
         <h2>Composition instrumentale</h2>
         {musicPlan ? <>
-          <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
+          <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {describeTempoRange(musicPlan)} · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
           <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
           <p className="hint">Instruments : {describeInstrumentPalette(musicPlan)}</p>
           <p className="analysis-note">Instruments choisis automatiquement pour cette image. La pièce recommence après sa conclusion.</p>
