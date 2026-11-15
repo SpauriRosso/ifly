@@ -9,6 +9,7 @@ $instruments = [ordered]@{
     violin = @('C4', 'G4', 'D5', 'A5', 'E6')
     cello = @('C3', 'G3', 'D4', 'A4', 'E5')
     flute = @('C4', 'G4', 'D5', 'A5', 'E6')
+    voice_oohs = @('C4', 'G4', 'D5', 'A5', 'E6')
     woodblock = @('C4')
     timpani = @('C3')
 }
