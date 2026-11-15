@@ -1,17 +1,40 @@
 import type { MusicNote, MusicPlan } from '../bindings/ifly/internal/music/models'
 import { TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
 
-// createPulseBuffer takes an audio context and image seed, then returns a reproducible quarter-second noise source.
-function createPulseBuffer(context: AudioContext, seed: string): AudioBuffer {
+// seededNoise takes an image seed and returns a reproducible stream of audio samples between minus one and one.
+function seededNoise(seed: string): () => number {
   let state = 2166136261
   for (const character of seed) state = Math.imul(state ^ character.charCodeAt(0), 16777619)
-  const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.25), context.sampleRate)
-  const samples = buffer.getChannelData(0)
-  for (let index = 0; index < samples.length; index++) {
+  return () => {
     state ^= state << 13
     state ^= state >>> 17
     state ^= state << 5
-    samples[index] = (state >>> 0) / 2147483648 - 1
+    return (state >>> 0) / 2147483648 - 1
+  }
+}
+
+// createPulseBuffer takes an audio context and image seed, then returns a reproducible quarter-second noise source.
+function createPulseBuffer(context: AudioContext, seed: string): AudioBuffer {
+  const nextSample = seededNoise(seed)
+  const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.25), context.sampleRate)
+  const samples = buffer.getChannelData(0)
+  for (let index = 0; index < samples.length; index++) {
+    samples[index] = nextSample()
+  }
+  return buffer
+}
+
+// createRoomImpulse takes an audio context, image seed, and decay length, then returns a stereo impulse for local ambience.
+function createRoomImpulse(context: AudioContext, seed: string, seconds: number): AudioBuffer {
+  const nextSample = seededNoise(seed + 'room')
+  const buffer = context.createBuffer(2, Math.floor(context.sampleRate * seconds), context.sampleRate)
+  for (let channel = 0; channel < 2; channel++) {
+    const samples = buffer.getChannelData(channel)
+    for (let index = 0; index < samples.length; index++) {
+      const fadeIn = Math.min(1, index / (context.sampleRate * 0.008))
+      const decay = (1 - index / samples.length) ** 2.5
+      samples[index] = nextSample() * fadeIn * decay
+    }
   }
   return buffer
 }
@@ -21,6 +44,7 @@ export class MusicPlayer {
   private context: AudioContext | null = null
   private master: GainNode | null = null
   private echo: DelayNode | null = null
+  private room: ConvolverNode | null = null
   private profile: TimbreProfile | null = null
   private pulseBuffer: AudioBuffer | null = null
   private timer: number | null = null
@@ -47,18 +71,24 @@ export class MusicPlayer {
     const echo = context.createDelay(2)
     const feedback = context.createGain()
     const wet = context.createGain()
+    const room = context.createConvolver()
+    const roomWet = context.createGain()
     master.gain.value = 0.75
     compressor.threshold.value = -18
     compressor.ratio.value = 3
     echo.delayTime.value = profile.echoBeats * 60 / plan.tempoBpm
     feedback.gain.value = profile.echoFeedback
     wet.gain.value = profile.echoMix
+    room.buffer = createRoomImpulse(context, plan.seed, profile.roomSeconds)
+    roomWet.gain.value = profile.roomMix
     master.connect(compressor).connect(context.destination)
     echo.connect(feedback).connect(echo)
     echo.connect(wet).connect(master)
+    room.connect(roomWet).connect(master)
     this.context = context
     this.master = master
     this.echo = echo
+    this.room = room
     this.profile = profile
     this.pulseBuffer = createPulseBuffer(context, plan.seed)
     this.notes = notes
@@ -99,6 +129,7 @@ export class MusicPlayer {
     this.context = null
     this.master = null
     this.echo = null
+    this.room = null
     this.profile = null
     this.pulseBuffer = null
     this.notes = []
@@ -165,6 +196,7 @@ export class MusicPlayer {
     oscillator.connect(envelope).connect(filter)
     filter.connect(master)
     if (this.echo && (voice === 'pad' || voice === 'lead' || voice === 'arp')) filter.connect(this.echo)
+    if (this.room && (voice === 'pad' || voice === 'lead' || voice === 'arp')) filter.connect(this.room)
     let secondary: OscillatorNode | null = null
     let harmonicGain: GainNode | null = null
     if (voice === 'pad') {

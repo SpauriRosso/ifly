@@ -14,6 +14,8 @@ export interface TimbreProfile {
   echoBeats: number
   echoMix: number
   echoFeedback: number
+  roomMix: number
+  roomSeconds: number
 }
 
 export interface PulseTimbre {
@@ -32,7 +34,7 @@ export const TIMBRES: Record<string, TimbreProfile> = {
       arp: { wave: 'sine', gain: 0.11, attack: 0.008, release: 0.18, cutoff: 2600 },
       pulse: { gain: 0.2, attack: 0.003, cutoff: 2200 },
     },
-    echoBeats: 0.75, echoMix: 0.12, echoFeedback: 0.18,
+    echoBeats: 0.75, echoMix: 0.12, echoFeedback: 0.18, roomMix: 0.12, roomSeconds: 1.5,
   },
   dark: {
     voices: {
@@ -42,7 +44,7 @@ export const TIMBRES: Record<string, TimbreProfile> = {
       arp: { wave: 'triangle', gain: 0.1, attack: 0.006, release: 0.13, cutoff: 1700 },
       pulse: { gain: 0.22, attack: 0.002, cutoff: 1600 },
     },
-    echoBeats: 0.5, echoMix: 0.09, echoFeedback: 0.15,
+    echoBeats: 0.5, echoMix: 0.09, echoFeedback: 0.15, roomMix: 0.09, roomSeconds: 1.25,
   },
   bright: {
     voices: {
@@ -52,7 +54,7 @@ export const TIMBRES: Record<string, TimbreProfile> = {
       arp: { wave: 'triangle', gain: 0.11, attack: 0.005, release: 0.12, cutoff: 4200 },
       pulse: { gain: 0.2, attack: 0.002, cutoff: 4200 },
     },
-    echoBeats: 0.75, echoMix: 0.1, echoFeedback: 0.16,
+    echoBeats: 0.75, echoMix: 0.1, echoFeedback: 0.16, roomMix: 0.08, roomSeconds: 1.1,
   },
   soft: {
     voices: {
@@ -62,6 +64,6 @@ export const TIMBRES: Record<string, TimbreProfile> = {
       arp: { wave: 'sine', gain: 0.1, attack: 0.008, release: 0.17, cutoff: 2200 },
       pulse: { gain: 0.17, attack: 0.003, cutoff: 2000 },
     },
-    echoBeats: 0.75, echoMix: 0.11, echoFeedback: 0.16,
+    echoBeats: 0.75, echoMix: 0.11, echoFeedback: 0.16, roomMix: 0.13, roomSeconds: 1.7,
   },
 }
