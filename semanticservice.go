@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +15,8 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // SemanticAnalysis is an unverified local model description, separate from measured visual features.
@@ -30,19 +33,41 @@ type SemanticAnalyzer interface {
 }
 
 type SemanticService struct {
-	engine SemanticAnalyzer
-	mu     sync.Mutex
-	busy   bool
-	cancel context.CancelFunc
+	engine  SemanticAnalyzer
+	mu      sync.Mutex
+	busy    bool
+	cancel  context.CancelFunc
+	runtime *LocalRuntime
 }
 
 // NewSemanticService constructs a loopback-only llama.cpp adapter for the development prototype.
 func NewSemanticService() *SemanticService {
 	endpoint := os.Getenv("IFLY_VLM_URL")
+	var runtime *LocalRuntime
 	if endpoint == "" {
 		endpoint = "http://127.0.0.1:11480"
+		runtime = &LocalRuntime{}
 	}
-	return &SemanticService{engine: &LlamaServerAnalyzer{endpoint: endpoint, client: &http.Client{Timeout: 75 * time.Second}}}
+	return &SemanticService{engine: &LlamaServerAnalyzer{endpoint: endpoint, client: &http.Client{Timeout: 75 * time.Second}}, runtime: runtime}
+}
+
+// ServiceStartup starts an installed local CPU runtime while keeping structural analysis usable if it is absent.
+func (s *SemanticService) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
+	if s.runtime != nil {
+		if err := s.runtime.Start(ctx); err != nil {
+			log.Printf("local VLM startup unavailable: %v", err)
+		}
+	}
+	return nil
+}
+
+// ServiceShutdown cancels inference and stops only a runtime owned by this application.
+func (s *SemanticService) ServiceShutdown() error {
+	s.Cancel()
+	if s.runtime != nil {
+		return s.runtime.Stop()
+	}
+	return nil
 }
 
 // Analyze validates a bounded PNG and runs one local inference at a time with a fixed timeout.
