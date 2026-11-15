@@ -1,0 +1,37 @@
+﻿[
+    {
+        "image":  "landscape",
+        "seconds":  1.77,
+        "text":  " The graph depicts the number of trees in a school setting.",
+        "tokens":  13,
+        "error":  null
+    },
+    {
+        "image":  "abstract",
+        "seconds":  2.05,
+        "text":  " 2 red circles and 3 blue circles are on a white background.",
+        "tokens":  16,
+        "error":  null
+    },
+    {
+        "image":  "person",
+        "seconds":  2.15,
+        "text":  " \\mathbb{P}",
+        "tokens":  7,
+        "error":  null
+    },
+    {
+        "image":  "happy_house",
+        "seconds":  2.22,
+        "text":  " A house with a red roof and four blue balloons below it.",
+        "tokens":  14,
+        "error":  null
+    },
+    {
+        "image":  "threat",
+        "seconds":  1.98,
+        "text":  " The image contains three black stick figures.",
+        "tokens":  9,
+        "error":  null
+    }
+]

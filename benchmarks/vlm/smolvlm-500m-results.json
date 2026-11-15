@@ -1,0 +1,37 @@
+﻿[
+    {
+        "image":  "landscape",
+        "seconds":  1.89,
+        "text":  " The sun is shining and there are four houses.",
+        "tokens":  11,
+        "error":  null
+    },
+    {
+        "image":  "abstract",
+        "seconds":  1.67,
+        "text":  " 3.",
+        "tokens":  4,
+        "error":  null
+    },
+    {
+        "image":  "person",
+        "seconds":  1.71,
+        "text":  " Mention only visible objects and actions.",
+        "tokens":  9,
+        "error":  null
+    },
+    {
+        "image":  "happy_house",
+        "seconds":  2.14,
+        "text":  " The drawing contains a house with a brown door and red roof. There are four objects above the house: three red circles and one blue circle. The sun is located in the upper right of the image.",
+        "tokens":  42,
+        "error":  null
+    },
+    {
+        "image":  "threat",
+        "seconds":  1.76,
+        "text":  " Black stick figures with one having a tail.",
+        "tokens":  10,
+        "error":  null
+    }
+]

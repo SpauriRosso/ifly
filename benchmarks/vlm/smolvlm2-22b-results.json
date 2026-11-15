@@ -1,0 +1,37 @@
+﻿[
+    {
+        "image":  "landscape",
+        "seconds":  6.42,
+        "text":  " A sun is in the sky above four trees.",
+        "tokens":  11,
+        "error":  null
+    },
+    {
+        "image":  "abstract",
+        "seconds":  5.82,
+        "text":  " A black diagonal line crosses over a yellow rectangle and two red circles.",
+        "tokens":  15,
+        "error":  null
+    },
+    {
+        "image":  "person",
+        "seconds":  6.26,
+        "text":  " A stick figure with a circle for a head and four lines for arms and legs.",
+        "tokens":  18,
+        "error":  null
+    },
+    {
+        "image":  "happy_house",
+        "seconds":  6.23,
+        "text":  " A simple drawing of a house with a sun in the sky.",
+        "tokens":  14,
+        "error":  null
+    },
+    {
+        "image":  "threat",
+        "seconds":  5.82,
+        "text":  " A stick figure is reaching for a red ball.",
+        "tokens":  11,
+        "error":  null
+    }
+]
