@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import type { SemanticAnalysis, StructuralAnalysis } from '../bindings/changeme/models'
+import type { MusicPlan, SemanticAnalysis, StructuralAnalysis } from '../bindings/changeme/models'
 import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
 import { createEdgePreview } from './edgePreview'
 import { cancelInterpretation, interpretPreview } from './semanticAnalysis'
+import { composePreview } from './musicPreview'
+import { MusicPlayer } from './musicPlayer'
 import './app.css'
+
+const MOOD_LABELS: Record<string, string> = { calm: 'Calme', tense: 'Tendue', energetic: 'Énergique', neutral: 'Neutre' }
+const MODE_LABELS: Record<string, string> = { pentatonic: 'pentatonique', minor: 'mineur', major: 'majeur', dorian: 'dorien' }
 
 // percent formats a normalized metric for the diagnostic panel.
 function percent(value: number): string {
@@ -17,19 +22,33 @@ function App() {
   const [analysis, setAnalysis] = useState<StructuralAnalysis | null>(null)
   const [semantic, setSemantic] = useState<SemanticAnalysis | null>(null)
   const [semanticError, setSemanticError] = useState('')
+  const [musicPlan, setMusicPlan] = useState<MusicPlan | null>(null)
+  const [musicError, setMusicError] = useState('')
+  const [playback, setPlayback] = useState<'stopped' | 'playing' | 'paused'>('stopped')
   const [edgeUrl, setEdgeUrl] = useState<string | null>(null)
   const [showEdges, setShowEdges] = useState(false)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState<'import' | 'analysis' | 'semantic' | 'edges' | null>(null)
+  const [busy, setBusy] = useState<'import' | 'analysis' | 'semantic' | 'music' | 'edges' | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<ImageData | null>(null)
   const edgeRef = useRef<string | null>(null)
+  const playerRef = useRef<MusicPlayer | null>(null)
+  const playerAction = useRef(false)
   const generation = useRef(0)
+
+  // discardMusic stops the current preview and clears the score when its source image or interpretation changes.
+  function discardMusic(): void {
+    playerRef.current?.stop()
+    setPlayback('stopped')
+    setMusicPlan(null)
+    setMusicError('')
+  }
 
   // importFile validates a new image and discards results from any earlier import or analysis.
   async function importFile(file: File) {
     const current = ++generation.current
     void cancelInterpretation().catch(() => undefined)
+    discardMusic()
     setBusy('import')
     setError('')
     setAnalysis(null)
@@ -73,6 +92,7 @@ function App() {
   async function runAnalysis() {
     if (!imageRef.current || busy) return
     const current = generation.current
+    discardMusic()
     setBusy('analysis')
     setError('')
     setSemantic(null)
@@ -93,11 +113,20 @@ function App() {
   async function runSemanticAnalysis() {
     if (!imageRef.current) return
     const current = generation.current
+    discardMusic()
     setBusy('semantic')
     setSemanticError('')
     try {
       const result = await interpretPreview(imageRef.current.url)
-      if (current === generation.current) setSemantic(result)
+      if (current !== generation.current) return
+      setSemantic(result)
+      setBusy('music')
+      try {
+        const plan = await composePreview(imageRef.current.url, result)
+        if (current === generation.current) setMusicPlan(plan)
+      } catch (cause) {
+        if (current === generation.current) setMusicError(cause instanceof Error ? cause.message : 'Plan musical indisponible.')
+      }
     } catch (cause) {
       if (current === generation.current) {
         const message = cause instanceof Error ? cause.message : ''
@@ -107,6 +136,36 @@ function App() {
       }
     } finally {
       if (current === generation.current) setBusy(null)
+    }
+  }
+
+  // togglePlayback takes the prepared score and starts, suspends, or resumes local audio from the user's click.
+  async function togglePlayback() {
+    if (!musicPlan || busy || playerAction.current) return
+    playerAction.current = true
+    const current = generation.current
+    const player = playerRef.current ?? new MusicPlayer()
+    playerRef.current = player
+    try {
+      if (playback === 'playing') {
+        await player.pause()
+        if (current === generation.current) setPlayback('paused')
+      } else if (playback === 'paused') {
+        await player.resume()
+        if (current === generation.current) setPlayback('playing')
+      } else {
+        await player.start(musicPlan)
+        if (current === generation.current) setPlayback('playing')
+      }
+      if (current === generation.current) setMusicError('')
+    } catch (cause) {
+      player.stop()
+      if (current === generation.current) {
+        setPlayback('stopped')
+        setMusicError(cause instanceof Error ? cause.message : 'Lecture audio impossible.')
+      }
+    } finally {
+      playerAction.current = false
     }
   }
 
@@ -143,6 +202,7 @@ function App() {
   useEffect(() => () => {
     generation.current++
     void cancelInterpretation().catch(() => undefined)
+    playerRef.current?.stop()
     if (imageRef.current) URL.revokeObjectURL(imageRef.current.url)
     if (edgeRef.current) URL.revokeObjectURL(edgeRef.current)
   }, [])
@@ -170,12 +230,12 @@ function App() {
           <button className="button" onClick={() => void runAnalysis()} disabled={!image || busy !== null}>{busy === 'analysis' ? 'Analyse en cours…' : 'Analyser'}</button>
           <input ref={inputRef} type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" onChange={handleSelection} className="visually-hidden" aria-label="Choisir une image" />
         </div>
-        <div className="play-state" title="La composition musicale sera disponible après l’analyse sémantique locale">▶ <span>Lecture à venir</span></div>
+        <button className="play-state" onClick={() => void togglePlayback()} disabled={!musicPlan || busy !== null} title={musicPlan ? 'Écouter ou mettre en pause l’esquisse musicale' : 'Analysez une image pour préparer la musique'} aria-label={playback === 'playing' ? 'Mettre la musique en pause' : playback === 'paused' ? 'Reprendre la musique' : 'Écouter l’esquisse musicale'}>{playback === 'playing' ? '❚❚' : '▶'} <span>{playback === 'playing' ? 'Pause' : playback === 'paused' ? 'Reprendre' : 'Écouter'}</span></button>
       </div>
       <div className="canvas-area">
         {image ? <img src={showEdges && edgeUrl ? edgeUrl : image.url} alt={showEdges ? `Carte des contours de ${image.fileName}` : `Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Déposez une image sur le plan de travail</strong><span>PNG, JPEG ou WebP · 20 Mo maximum</span></div>}
       </div>
-      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Mesures en cours' : busy === 'semantic' ? 'Interprétation locale en cours' : semantic ? 'Interprétation expérimentale disponible' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
+      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{playback === 'playing' ? 'Esquisse musicale en cours' : playback === 'paused' ? 'Musique en pause' : showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Mesures en cours' : busy === 'semantic' ? 'Interprétation locale en cours' : busy === 'music' ? 'Composition en cours' : musicPlan ? 'Esquisse musicale prête' : semantic ? 'Interprétation expérimentale disponible' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
     </section>
 
     <aside className="inspector" aria-label="Analyse et propriétés">
@@ -203,7 +263,12 @@ function App() {
         {semanticError && <p className="error" role="alert">{semanticError}</p>}
         {!semantic && !semanticError && busy !== 'semantic' && <p className="hint">{analysis ? 'La description locale sera proposée ici.' : 'Analysez l’image pour commencer.'}</p>}
         {analysis && !semantic && busy === null && <button className="edge-button" onClick={() => void runSemanticAnalysis()}>Réessayer l’interprétation</button>}
-        <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span className={semantic ? 'done' : ''}>02 · Sens expérimental</span><span>03 · Musique</span><span>04 · Évolution</span></div>
+        <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span className={semantic ? 'done' : ''}>02 · Sens expérimental</span><span className={musicPlan ? 'done' : ''}>03 · Musique</span><span>04 · Évolution</span></div>
+      </section>
+      <section className="inspector-section music-section">
+        <h2>Esquisse musicale · laboratoire</h2>
+        {musicPlan ? <><p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p><p className="hint">Composition locale reproductible, liée à cette image. Écoutez-la avec le bouton en haut à droite.</p></> : <p className="hint">La musique est préparée après l’interprétation.</p>}
+        {musicError && <p className="error" role="alert">{musicError}</p>}
       </section>
     </aside>
   </main>
