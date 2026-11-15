@@ -66,6 +66,17 @@ func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 	}
 }
 
+// TestComposeMusicResolvesHome checks that a tense phrase ends on its tonic instead of looping from an unresolved dominant.
+func TestComposeMusicResolvesHome(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
+	for _, note := range plan.Notes {
+		if note.Beat == 60 && note.Voice == "pad" && note.MIDI == 48 {
+			return
+		}
+	}
+	t.Fatal("final harmony did not resolve to the tonic")
+}
+
 // TestMusicServiceComposeRejectsInvalidImage checks that the score cannot be generated from an unbounded or malformed image.
 func TestMusicServiceComposeRejectsInvalidImage(t *testing.T) {
 	if _, err := (&MusicService{}).Compose("data:image/png;base64,AA==", semantic.SemanticAnalysis{}); err == nil {

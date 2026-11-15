@@ -71,6 +71,13 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		if section == 2 || (section == 1 && bar%4 == 3) {
 			chord = character.bridge[bar%4]
 		}
+		if bar == 15 {
+			third := 4
+			if character.mode == "minor" || character.mode == "dorian" {
+				third = 3
+			}
+			chord = chordSpec{rootOffset: 0, third: third}
+		}
 		chordRoot := root + chord.rootOffset
 		energy := sections[section].Energy
 		padLength := 3.75
