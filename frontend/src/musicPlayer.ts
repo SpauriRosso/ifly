@@ -1,12 +1,28 @@
 import type { MusicNote, MusicPlan } from '../bindings/ifly/internal/music/models'
 import { TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
 
+// createPulseBuffer takes an audio context and image seed, then returns a reproducible quarter-second noise source.
+function createPulseBuffer(context: AudioContext, seed: string): AudioBuffer {
+  let state = 2166136261
+  for (const character of seed) state = Math.imul(state ^ character.charCodeAt(0), 16777619)
+  const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.25), context.sampleRate)
+  const samples = buffer.getChannelData(0)
+  for (let index = 0; index < samples.length; index++) {
+    state ^= state << 13
+    state ^= state >>> 17
+    state ^= state << 5
+    samples[index] = (state >>> 0) / 2147483648 - 1
+  }
+  return buffer
+}
+
 // MusicPlayer schedules a bounded Go score with disposable Web Audio nodes and a pauseable audio clock.
 export class MusicPlayer {
   private context: AudioContext | null = null
   private master: GainNode | null = null
   private echo: DelayNode | null = null
   private profile: TimbreProfile | null = null
+  private pulseBuffer: AudioBuffer | null = null
   private timer: number | null = null
   private notes: MusicNote[] = []
   private secondsPerBeat = 0
@@ -22,7 +38,7 @@ export class MusicPlayer {
     }
     const notes = plan.notes
     const profile = TIMBRES[plan.timbre]
-    if (!profile || notes.some((note, index) => !Number.isFinite(note.beat) || note.beat < 0 || note.beat >= plan.beatsPerLoop || !Number.isFinite(note.duration) || note.duration <= 0 || note.duration > 16 || !Number.isFinite(note.velocity) || note.velocity <= 0 || note.velocity > 1 || !Number.isInteger(note.midi) || note.midi < 24 || note.midi > 100 || !(note.voice in profile.voices) || (index > 0 && note.beat < notes[index - 1].beat))) {
+    if (!profile || notes.some((note, index) => !Number.isFinite(note.beat) || note.beat < 0 || note.beat >= plan.beatsPerLoop || !Number.isFinite(note.duration) || note.duration <= 0 || note.duration > 16 || !Number.isFinite(note.velocity) || note.velocity <= 0 || note.velocity > 1 || !Number.isInteger(note.midi) || note.midi < 24 || note.midi > 100 || !Object.prototype.hasOwnProperty.call(profile.voices, note.voice) || (index > 0 && note.beat < notes[index - 1].beat))) {
       throw new Error('Les notes du plan musical sont invalides.')
     }
     const context = new AudioContext()
@@ -44,6 +60,7 @@ export class MusicPlayer {
     this.master = master
     this.echo = echo
     this.profile = profile
+    this.pulseBuffer = createPulseBuffer(context, plan.seed)
     this.notes = notes
     this.secondsPerBeat = 60 / plan.tempoBpm
     this.loopDuration = plan.beatsPerLoop * this.secondsPerBeat
@@ -83,6 +100,7 @@ export class MusicPlayer {
     this.master = null
     this.echo = null
     this.profile = null
+    this.pulseBuffer = null
     this.notes = []
     if (!context) return
     if (context.state === 'running' && master) {
@@ -117,6 +135,10 @@ export class MusicPlayer {
     const profile = this.profile
     if (!context || !master || !profile) return
     const voice = note.voice as MusicVoice
+    if (voice === 'pulse') {
+      this.playPulse(note, at)
+      return
+    }
     const timbre = profile.voices[voice]
     if (!timbre) return
     const oscillator = context.createOscillator()
@@ -128,8 +150,7 @@ export class MusicPlayer {
     const level = note.velocity * timbre.gain
     const frequency = 440 * 2 ** ((note.midi - 69) / 12)
     oscillator.type = timbre.wave
-    oscillator.frequency.setValueAtTime(voice === 'pulse' ? frequency * 1.4 : frequency, at)
-    if (voice === 'pulse') oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.65, at + duration)
+    oscillator.frequency.setValueAtTime(frequency, at)
     filter.type = 'lowpass'
     filter.frequency.setValueAtTime(timbre.cutoff, at)
     if (voice === 'lead' || voice === 'bass' || voice === 'arp') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
@@ -173,5 +194,33 @@ export class MusicPlayer {
     }
     oscillator.start(at)
     oscillator.stop(at + duration + 0.01)
+  }
+
+  // playPulse takes one rhythmic event and plays a short filtered noise hit through the main output.
+  private playPulse(note: MusicNote, at: number): void {
+    const context = this.context
+    const master = this.master
+    const timbre = this.profile?.voices.pulse
+    const buffer = this.pulseBuffer
+    if (!context || !master || !timbre || !buffer) return
+    const source = context.createBufferSource()
+    const filter = context.createBiquadFilter()
+    const envelope = context.createGain()
+    const duration = Math.max(0.04, Math.min(0.16, note.duration * this.secondsPerBeat))
+    source.buffer = buffer
+    filter.type = 'highpass'
+    filter.frequency.value = timbre.cutoff
+    filter.Q.value = 0.7
+    envelope.gain.setValueAtTime(0, at)
+    envelope.gain.linearRampToValueAtTime(note.velocity * timbre.gain, at + Math.min(timbre.attack, duration * 0.2))
+    envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration)
+    source.connect(filter).connect(envelope).connect(master)
+    source.onended = () => {
+      source.disconnect()
+      filter.disconnect()
+      envelope.disconnect()
+    }
+    source.start(at)
+    source.stop(at + duration)
   }
 }
