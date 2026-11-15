@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { StructuralAnalysis } from '../bindings/changeme/models'
+import type { SemanticAnalysis, StructuralAnalysis } from '../bindings/changeme/models'
 import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
 import { createEdgePreview } from './edgePreview'
+import { interpretPreview } from './semanticAnalysis'
 import './app.css'
 
 // percent formats a normalized metric for the diagnostic panel.
@@ -14,10 +15,12 @@ function percent(value: number): string {
 function App() {
   const [image, setImage] = useState<ImageData | null>(null)
   const [analysis, setAnalysis] = useState<StructuralAnalysis | null>(null)
+  const [semantic, setSemantic] = useState<SemanticAnalysis | null>(null)
+  const [semanticError, setSemanticError] = useState('')
   const [edgeUrl, setEdgeUrl] = useState<string | null>(null)
   const [showEdges, setShowEdges] = useState(false)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState<'import' | 'analysis' | 'edges' | null>(null)
+  const [busy, setBusy] = useState<'import' | 'analysis' | 'semantic' | 'edges' | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<ImageData | null>(null)
   const edgeRef = useRef<string | null>(null)
@@ -29,6 +32,8 @@ function App() {
     setBusy('import')
     setError('')
     setAnalysis(null)
+    setSemantic(null)
+    setSemanticError('')
     setShowEdges(false)
     setEdgeUrl(null)
     if (edgeRef.current) URL.revokeObjectURL(edgeRef.current)
@@ -69,11 +74,36 @@ function App() {
     const current = generation.current
     setBusy('analysis')
     setError('')
+    setSemantic(null)
+    setSemanticError('')
     try {
       const result = await analyzePreview(imageRef.current.url)
-      if (current === generation.current) setAnalysis(result)
+      if (current !== generation.current) return
+      setAnalysis(result)
+      await runSemanticAnalysis()
     } catch (cause) {
       if (current === generation.current) setError(cause instanceof Error ? cause.message : 'Analyse locale impossible.')
+    } finally {
+      if (current === generation.current) setBusy(null)
+    }
+  }
+
+  // runSemanticAnalysis requests a local VLM description and keeps failures separate from measured data.
+  async function runSemanticAnalysis() {
+    if (!imageRef.current) return
+    const current = generation.current
+    setBusy('semantic')
+    setSemanticError('')
+    try {
+      const result = await interpretPreview(imageRef.current.url)
+      if (current === generation.current) setSemantic(result)
+    } catch (cause) {
+      if (current === generation.current) {
+        const message = cause instanceof Error ? cause.message : ''
+        setSemanticError(message.includes('unavailable') || message.includes('connect')
+          ? 'Modèle local indisponible sur 127.0.0.1:11480. Les mesures visuelles restent utilisables.'
+          : 'Interprétation locale impossible. Vérifiez le modèle et réessayez.')
+      }
     } finally {
       if (current === generation.current) setBusy(null)
     }
@@ -143,7 +173,7 @@ function App() {
       <div className="canvas-area">
         {image ? <img src={showEdges && edgeUrl ? edgeUrl : image.url} alt={showEdges ? `Carte des contours de ${image.fileName}` : `Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Déposez une image sur le plan de travail</strong><span>PNG, JPEG ou WebP · 20 Mo maximum</span></div>}
       </div>
-      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Analyse locale en cours' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
+      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Mesures en cours' : busy === 'semantic' ? 'Interprétation locale en cours' : semantic ? 'Interprétation expérimentale disponible' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
     </section>
 
     <aside className="inspector" aria-label="Analyse et propriétés">
@@ -165,9 +195,13 @@ function App() {
         </div><p className="analysis-note">Mesures locales sans interprétation du sujet ni de l’émotion.</p><button className="edge-button" onClick={() => void toggleEdges()} disabled={busy === 'edges'}>{busy === 'edges' ? 'Préparation…' : showEdges ? 'Revoir l’image' : 'Voir les contours'}</button></>}
       </section>
       <section className="inspector-section next-section">
-        <h2>Suite de l’expérience</h2>
-        <p className="hint">{analysis ? 'Prochaine étape : intégrer et évaluer un modèle visuel local pour comprendre le sujet et l’atmosphère. La musique viendra après ce test.' : 'Analysez l’image pour préparer son interprétation.'}</p>
-        <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span>02 · Sens</span><span>03 · Musique</span><span>04 · Évolution</span></div>
+        <h2>Interprétation locale</h2>
+        {semantic && <><p className="semantic-description">{semantic.description}</p><p className="hint">Sujets proposés : {semantic.subjects?.length ? semantic.subjects.join(', ') : 'non identifiés'}</p><p className="analysis-note">{semantic.uncertain ? 'Le modèle signale une incertitude.' : 'Proposition du modèle à vérifier : les croquis ambigus peuvent être mal reconnus.'}</p></>}
+        {!semantic && busy === 'semantic' && <p className="hint" role="status">Le modèle local examine l’image…</p>}
+        {semanticError && <p className="error" role="alert">{semanticError}</p>}
+        {!semantic && !semanticError && busy !== 'semantic' && <p className="hint">{analysis ? 'La description locale sera proposée ici.' : 'Analysez l’image pour commencer.'}</p>}
+        {analysis && !semantic && busy === null && <button className="edge-button" onClick={() => void runSemanticAnalysis()}>Réessayer l’interprétation</button>}
+        <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span className={semantic ? 'done' : ''}>02 · Sens expérimental</span><span>03 · Musique</span><span>04 · Évolution</span></div>
       </section>
     </aside>
   </main>
