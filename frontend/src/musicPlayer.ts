@@ -1,9 +1,12 @@
 import type { MusicNote, MusicPlan } from '../bindings/ifly/internal/music/models'
+import { TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
 
 // MusicPlayer schedules a bounded Go score with disposable Web Audio nodes and a pauseable audio clock.
 export class MusicPlayer {
   private context: AudioContext | null = null
   private master: GainNode | null = null
+  private echo: DelayNode | null = null
+  private profile: TimbreProfile | null = null
   private timer: number | null = null
   private notes: MusicNote[] = []
   private secondsPerBeat = 0
@@ -18,15 +21,29 @@ export class MusicPlayer {
       throw new Error('Le plan musical est invalide.')
     }
     const notes = plan.notes
-    if (notes.some((note, index) => !Number.isFinite(note.beat) || note.beat < 0 || note.beat >= plan.beatsPerLoop || !Number.isFinite(note.duration) || note.duration <= 0 || note.duration > 16 || (index > 0 && note.beat < notes[index - 1].beat))) {
+    const profile = TIMBRES[plan.timbre]
+    if (!profile || notes.some((note, index) => !Number.isFinite(note.beat) || note.beat < 0 || note.beat >= plan.beatsPerLoop || !Number.isFinite(note.duration) || note.duration <= 0 || note.duration > 16 || !Number.isFinite(note.velocity) || note.velocity <= 0 || note.velocity > 1 || !Number.isInteger(note.midi) || note.midi < 24 || note.midi > 100 || !(note.voice in profile.voices) || (index > 0 && note.beat < notes[index - 1].beat))) {
       throw new Error('Les notes du plan musical sont invalides.')
     }
     const context = new AudioContext()
     const master = context.createGain()
+    const compressor = context.createDynamicsCompressor()
+    const echo = context.createDelay(2)
+    const feedback = context.createGain()
+    const wet = context.createGain()
     master.gain.value = 0.75
-    master.connect(context.destination)
+    compressor.threshold.value = -18
+    compressor.ratio.value = 3
+    echo.delayTime.value = profile.echoBeats * 60 / plan.tempoBpm
+    feedback.gain.value = profile.echoFeedback
+    wet.gain.value = profile.echoMix
+    master.connect(compressor).connect(context.destination)
+    echo.connect(feedback).connect(echo)
+    echo.connect(wet).connect(master)
     this.context = context
     this.master = master
+    this.echo = echo
+    this.profile = profile
     this.notes = notes
     this.secondsPerBeat = 60 / plan.tempoBpm
     this.loopDuration = plan.beatsPerLoop * this.secondsPerBeat
@@ -64,6 +81,8 @@ export class MusicPlayer {
     const master = this.master
     this.context = null
     this.master = null
+    this.echo = null
+    this.profile = null
     this.notes = []
     if (!context) return
     if (context.state === 'running' && master) {
@@ -91,28 +110,51 @@ export class MusicPlayer {
     }
   }
 
-  // playNote turns one MIDI event into a short enveloped oscillator and disconnects it after release.
+  // playNote takes one scheduled event, shapes its voice and echo, and disconnects the finished audio nodes.
   private playNote(note: MusicNote, at: number): void {
     const context = this.context
     const master = this.master
-    if (!context || !master || note.midi < 24 || note.midi > 100 || note.velocity <= 0 || note.velocity > 1) return
+    const profile = this.profile
+    if (!context || !master || !profile) return
+    const voice = note.voice as MusicVoice
+    const timbre = profile.voices[voice]
+    if (!timbre) return
     const oscillator = context.createOscillator()
     const envelope = context.createGain()
+    const filter = context.createBiquadFilter()
     const duration = Math.max(0.1, Math.min(8, note.duration * this.secondsPerBeat))
-    const pad = note.voice === 'pad'
-    const attack = pad ? 0.09 : 0.015
-    const release = Math.min(0.25, duration * 0.3)
-    const level = note.velocity * (pad ? 0.12 : 0.18)
-    oscillator.type = pad ? 'sine' : 'triangle'
-    oscillator.frequency.value = 440 * 2 ** ((note.midi - 69) / 12)
+    const attack = Math.min(timbre.attack, duration * 0.3)
+    const release = Math.min(timbre.release, duration * 0.4)
+    const level = note.velocity * timbre.gain
+    const frequency = 440 * 2 ** ((note.midi - 69) / 12)
+    oscillator.type = timbre.wave
+    oscillator.frequency.setValueAtTime(voice === 'pulse' ? frequency * 1.4 : frequency, at)
+    if (voice === 'pulse') oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.65, at + duration)
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(timbre.cutoff, at)
+    if (voice === 'lead' || voice === 'bass') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
     envelope.gain.setValueAtTime(0, at)
-    envelope.gain.linearRampToValueAtTime(level, at + Math.min(attack, duration / 3))
+    envelope.gain.linearRampToValueAtTime(level, at + attack)
     envelope.gain.setValueAtTime(level, at + duration - release)
     envelope.gain.linearRampToValueAtTime(0, at + duration)
-    oscillator.connect(envelope).connect(master)
+    oscillator.connect(envelope).connect(filter)
+    filter.connect(master)
+    if (this.echo && (voice === 'pad' || voice === 'lead')) filter.connect(this.echo)
+    let secondary: OscillatorNode | null = null
+    if (voice === 'pad') {
+      secondary = context.createOscillator()
+      secondary.type = timbre.wave
+      secondary.frequency.value = frequency
+      secondary.detune.value = 5
+      secondary.connect(envelope)
+      secondary.start(at)
+      secondary.stop(at + duration + 0.01)
+    }
     oscillator.onended = () => {
       oscillator.disconnect()
+      secondary?.disconnect()
       envelope.disconnect()
+      filter.disconnect()
     }
     oscillator.start(at)
     oscillator.stop(at + duration + 0.01)
