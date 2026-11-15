@@ -47,3 +47,6 @@ frontend/bindings/github.com/
 greetservice.go
 go.mod.bckp
 go.mod.pre-wails
+
+# Downloaded local inference runtime and model weights
+local-vlm/
