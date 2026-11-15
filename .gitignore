@@ -29,5 +29,21 @@ go.work.sum
 .env
 
 # Editor/IDE
- .idea/
+.idea/
 # .vscode/
+
+# Local build and package-manager output
+.task/
+bin/
+debug.log
+frontend/node_modules/
+frontend/dist/
+
+# Unused Wails template files and local migration backups
+frontend/public/
+frontend/Inter Font License.txt
+frontend/bindings/events/
+frontend/bindings/github.com/
+greetservice.go
+go.mod.bckp
+go.mod.pre-wails
