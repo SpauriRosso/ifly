@@ -1,4 +1,4 @@
-import type { MusicNote, MusicPlan } from '../bindings/changeme/models'
+import type { MusicNote, MusicPlan } from '../bindings/changeme/internal/music/models'
 
 // MusicPlayer schedules a bounded Go score with disposable Web Audio nodes and a pauseable audio clock.
 export class MusicPlayer {

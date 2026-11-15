@@ -1,5 +1,5 @@
-import { MusicService } from '../bindings/changeme'
-import type { MusicPlan } from '../bindings/changeme/models'
+import { MusicService } from '../bindings/changeme/internal/music'
+import type { MusicPlan } from '../bindings/changeme/internal/music/models'
 import type { SemanticAnalysis } from '../bindings/changeme/internal/semantic/models'
 import { prepareAnalysisImage } from './structuralAnalysis'
 

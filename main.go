@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"changeme/internal/analysis"
+	"changeme/internal/music"
 	"changeme/internal/semantic"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -14,7 +15,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// main starts the IFLY desktop window and binds structural and semantic analysis services.
+// main starts the IFLY desktop window and binds the analysis, semantic, and music services.
 func main() {
 	app := application.New(application.Options{
 		Name:        "IFLY",
@@ -22,7 +23,7 @@ func main() {
 		Services: []application.Service{
 			application.NewService(&analysis.AnalysisService{}),
 			application.NewService(semantic.NewSemanticService()),
-			application.NewService(&MusicService{}),
+			application.NewService(&music.MusicService{}),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

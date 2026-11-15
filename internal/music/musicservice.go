@@ -1,4 +1,4 @@
-package main
+package music
 
 import (
 	"crypto/sha256"
