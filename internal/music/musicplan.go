@@ -54,10 +54,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	complexity := math.Max(0, math.Min(1, structure.Complexity))
 	tempo := character.baseTempo + int(math.Round(10*complexity))
 	root := 48 + int(digest[0]%12)
-	motif := [4]int{0, 2, 4, 2}
-	for i := range motif {
-		motif[i] = (motif[i] + int(digest[i+1]%2)) % len(character.scale)
-	}
+	motif := makeMotif(digest, len(character.scale))
 	sections := []MusicSection{
 		{Label: "A", StartBeat: 0, EndBeat: 16, Energy: 0.72, TempoBPM: tempo + character.tempoArc[0]},
 		{Label: "A'", StartBeat: 16, EndBeat: 32, Energy: 0.88, TempoBPM: tempo + character.tempoArc[1]},
@@ -118,7 +115,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 				notes = append(notes, MusicNote{start + beat, 0.18, root, 0.32 * energy, "pulse"})
 			}
 		}
-		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chordRoot, motif, previousLeadPitch, energy, complexity, character)
+		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, motif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
 		previousLeadPitch = finalPitch
 		if useHum {

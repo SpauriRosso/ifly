@@ -2,6 +2,16 @@ package music
 
 import "math"
 
+// makeMotif takes the image digest and scale size, then returns a rising and falling contour without wrapping its peak to the tonic.
+func makeMotif(digest [32]byte, scaleSize int) [4]int {
+	second := 2 + int(digest[1]%2)
+	peak := 4 + int(digest[2]%2)
+	if peak >= scaleSize {
+		peak = scaleSize - 1
+	}
+	return [4]int{0, second, peak, second}
+}
+
 // melodyRhythmForBar takes the style, visual complexity, and phrase position, then returns a safe variation of that bar's rhythm.
 func melodyRhythmForBar(bar, section int, complexity float64, character musicalCharacter) []float64 {
 	rhythm := append([]float64(nil), character.melodyRhythm[bar%2]...)
@@ -51,9 +61,10 @@ func nearestMelodyRegister(pitch, previous int) int {
 }
 
 // melodyNotes takes one bar's harmony, motif, phrase position, and prior pitch, then returns its shaped lead events and final pitch.
-func melodyNotes(start float64, bar, section, finalBar, root, chordRoot int, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
+func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpec, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
 	rhythm := melodyRhythmForBar(bar, section, complexity, character)
 	notes := make([]MusicNote, 0, len(rhythm))
+	chordRoot := root + chord.rootOffset
 	for index, beat := range rhythm {
 		degree := motif[(bar%2*2+index)%len(motif)]
 		if section == 1 && index > 0 {
@@ -71,6 +82,12 @@ func melodyNotes(start float64, bar, section, finalBar, root, chordRoot int, mot
 		pitch := root + 12 + character.scale[degree]
 		if index == 0 {
 			pitch = chordRoot + 12
+		} else if index == len(rhythm)-1 {
+			interval := chord.third
+			if bar%2 == 1 {
+				interval = 7
+			}
+			pitch = chordRoot + 12 + interval
 		}
 		if bar == finalBar {
 			pitch = root + 12

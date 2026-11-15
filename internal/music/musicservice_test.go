@@ -157,6 +157,22 @@ func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
 	}
 }
 
+// TestMotifAndMelodicAnswerKeepTheirShape checks that a pentatonic peak does not wrap and the bar answer lands on its chord.
+func TestMotifAndMelodicAnswerKeepTheirShape(t *testing.T) {
+	var digest [32]byte
+	digest[1], digest[2] = 1, 1
+	motif := makeMotif(digest, 5)
+	if motif[0] != 0 || motif[1] >= motif[2] || motif[3] != motif[1] {
+		t.Fatalf("motif lost its arch: %v", motif)
+	}
+	character := musicalStyles["calm"]
+	chord := chordSpec{rootOffset: 5, third: 4}
+	notes, _ := melodyNotes(0, 0, 0, 23, 48, chord, motif, 0, 1, 0.7, character)
+	if len(notes) < 2 || notes[len(notes)-1].MIDI%12 != (48+5+4)%12 {
+		t.Fatalf("melodic answer missed the chord third: %+v", notes)
+	}
+}
+
 // TestMelodyRhythmFollowsPhraseArc checks that a detailed image grows in the bridge and thins before the final cadence.
 func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
