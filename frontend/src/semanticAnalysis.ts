@@ -6,3 +6,8 @@ import { prepareAnalysisImage } from './structuralAnalysis'
 export async function interpretPreview(url: string): Promise<SemanticAnalysis> {
   return SemanticService.Analyze(await prepareAnalysisImage(url))
 }
+
+// cancelInterpretation asks Go to stop an in-flight local model request when its image is discarded.
+export async function cancelInterpretation(): Promise<void> {
+  await SemanticService.Cancel()
+}

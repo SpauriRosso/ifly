@@ -3,7 +3,7 @@ import type { SemanticAnalysis, StructuralAnalysis } from '../bindings/changeme/
 import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
 import { createEdgePreview } from './edgePreview'
-import { interpretPreview } from './semanticAnalysis'
+import { cancelInterpretation, interpretPreview } from './semanticAnalysis'
 import './app.css'
 
 // percent formats a normalized metric for the diagnostic panel.
@@ -29,6 +29,7 @@ function App() {
   // importFile validates a new image and discards results from any earlier import or analysis.
   async function importFile(file: File) {
     const current = ++generation.current
+    void cancelInterpretation().catch(() => undefined)
     setBusy('import')
     setError('')
     setAnalysis(null)
@@ -141,6 +142,7 @@ function App() {
 
   useEffect(() => () => {
     generation.current++
+    void cancelInterpretation().catch(() => undefined)
     if (imageRef.current) URL.revokeObjectURL(imageRef.current.url)
     if (edgeRef.current) URL.revokeObjectURL(edgeRef.current)
   }, [])
