@@ -132,14 +132,14 @@ export class MusicPlayer {
     if (voice === 'pulse') oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.65, at + duration)
     filter.type = 'lowpass'
     filter.frequency.setValueAtTime(timbre.cutoff, at)
-    if (voice === 'lead' || voice === 'bass') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
+    if (voice === 'lead' || voice === 'bass' || voice === 'arp') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
     envelope.gain.setValueAtTime(0, at)
     envelope.gain.linearRampToValueAtTime(level, at + attack)
     envelope.gain.setValueAtTime(level, at + duration - release)
     envelope.gain.linearRampToValueAtTime(0, at + duration)
     oscillator.connect(envelope).connect(filter)
     filter.connect(master)
-    if (this.echo && (voice === 'pad' || voice === 'lead')) filter.connect(this.echo)
+    if (this.echo && (voice === 'pad' || voice === 'lead' || voice === 'arp')) filter.connect(this.echo)
     let secondary: OscillatorNode | null = null
     if (voice === 'pad') {
       secondary = context.createOscillator()
