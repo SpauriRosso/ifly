@@ -32,6 +32,8 @@ type SemanticAnalyzer interface {
 type SemanticService struct {
 	engine SemanticAnalyzer
 	mu     sync.Mutex
+	busy   bool
+	cancel context.CancelFunc
 }
 
 // NewSemanticService constructs a loopback-only llama.cpp adapter for the development prototype.
@@ -48,13 +50,33 @@ func (s *SemanticService) Analyze(dataURL string) (SemanticAnalysis, error) {
 	if _, err := decodeAnalysisImage(dataURL); err != nil {
 		return SemanticAnalysis{}, err
 	}
-	if !s.mu.TryLock() {
+	s.mu.Lock()
+	if s.busy {
+		s.mu.Unlock()
 		return SemanticAnalysis{}, errors.New("semantic analysis already in progress")
 	}
-	defer s.mu.Unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), 75*time.Second)
-	defer cancel()
+	s.busy = true
+	s.cancel = cancel
+	s.mu.Unlock()
+	defer func() {
+		cancel()
+		s.mu.Lock()
+		s.busy = false
+		s.cancel = nil
+		s.mu.Unlock()
+	}()
 	return s.engine.Analyze(ctx, dataURL)
+}
+
+// Cancel stops the current inference request without changing previously completed results.
+func (s *SemanticService) Cancel() {
+	s.mu.Lock()
+	cancel := s.cancel
+	s.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
 }
 
 type LlamaServerAnalyzer struct {

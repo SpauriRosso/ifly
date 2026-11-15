@@ -15,3 +15,10 @@ import * as $models from "./models.js";
 export function Analyze(dataURL: string): $CancellablePromise<$models.SemanticAnalysis> {
     return $Call.ByID(1252520355, dataURL);
 }
+
+/**
+ * Cancel stops the current inference request without changing previously completed results.
+ */
+export function Cancel(): $CancellablePromise<void> {
+    return $Call.ByID(1409790795);
+}

@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"image"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestLlamaServerAnalyzerAcceptsValidReply verifies the image request and the parsed semantic result.
@@ -37,6 +39,38 @@ func TestLlamaServerAnalyzerAcceptsValidReply(t *testing.T) {
 	result, err := (&LlamaServerAnalyzer{endpoint: server.URL, client: server.Client()}).Analyze(context.Background(), "data:image/png;base64,AA==")
 	if err != nil || result.Description != "A tree" || len(result.Subjects) != 1 || result.Source == "" {
 		t.Fatalf("unexpected semantic result: %+v, %v", result, err)
+	}
+}
+
+type blockingSemanticAnalyzer struct{ started chan struct{} }
+
+// Analyze waits for cancellation so the service test can verify active request cleanup.
+func (a *blockingSemanticAnalyzer) Analyze(ctx context.Context, _ string) (SemanticAnalysis, error) {
+	close(a.started)
+	<-ctx.Done()
+	return SemanticAnalysis{}, ctx.Err()
+}
+
+// TestSemanticServiceCancel verifies that changing artwork can stop an active inference request.
+func TestSemanticServiceCancel(t *testing.T) {
+	engine := &blockingSemanticAnalyzer{started: make(chan struct{})}
+	service := &SemanticService{engine: engine}
+	dataURL := encodeTestImage(t, image.NewRGBA(image.Rect(0, 0, 2, 2)))
+	finished := make(chan error, 1)
+	go func() { _, err := service.Analyze(dataURL); finished <- err }()
+	select {
+	case <-engine.started:
+	case <-time.After(time.Second):
+		t.Fatal("inference did not start")
+	}
+	service.Cancel()
+	select {
+	case err := <-finished:
+		if err != context.Canceled {
+			t.Fatalf("expected cancellation, got %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("inference did not stop")
 	}
 }
 
