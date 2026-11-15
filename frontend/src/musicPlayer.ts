@@ -135,12 +135,17 @@ export class MusicPlayer {
     if (voice === 'lead' || voice === 'bass' || voice === 'arp') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
     envelope.gain.setValueAtTime(0, at)
     envelope.gain.linearRampToValueAtTime(level, at + attack)
-    envelope.gain.setValueAtTime(level, at + duration - release)
+    if (voice === 'pad') {
+      envelope.gain.setValueAtTime(level, at + duration - release)
+    } else {
+      envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, level * 0.38), at + duration - release)
+    }
     envelope.gain.linearRampToValueAtTime(0, at + duration)
     oscillator.connect(envelope).connect(filter)
     filter.connect(master)
     if (this.echo && (voice === 'pad' || voice === 'lead' || voice === 'arp')) filter.connect(this.echo)
     let secondary: OscillatorNode | null = null
+    let harmonicGain: GainNode | null = null
     if (voice === 'pad') {
       secondary = context.createOscillator()
       secondary.type = timbre.wave
@@ -149,10 +154,20 @@ export class MusicPlayer {
       secondary.connect(envelope)
       secondary.start(at)
       secondary.stop(at + duration + 0.01)
+    } else if (voice === 'lead') {
+      secondary = context.createOscillator()
+      harmonicGain = context.createGain()
+      secondary.type = 'sine'
+      secondary.frequency.value = frequency * 2
+      harmonicGain.gain.value = 0.18
+      secondary.connect(harmonicGain).connect(envelope)
+      secondary.start(at)
+      secondary.stop(at + duration + 0.01)
     }
     oscillator.onended = () => {
       oscillator.disconnect()
       secondary?.disconnect()
+      harmonicGain?.disconnect()
       envelope.disconnect()
       filter.disconnect()
     }
