@@ -12,7 +12,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// main starts the IFLY desktop window and binds the local image analysis service.
+// main starts the IFLY desktop window and binds structural and semantic analysis services.
 func main() {
 	app := application.New(application.Options{
 		Name:        "IFLY",
