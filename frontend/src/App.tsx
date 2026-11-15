@@ -102,7 +102,7 @@ function App() {
       if (current === generation.current) {
         const message = cause instanceof Error ? cause.message : ''
         setSemanticError(message.includes('unavailable') || message.includes('connect')
-          ? 'Modèle local indisponible sur 127.0.0.1:11480. Les mesures visuelles restent utilisables.'
+          ? 'Modèle local indisponible. Exécutez scripts/setup-local-vlm.ps1 une fois, puis relancez IFLY. Les mesures visuelles restent utilisables.'
           : 'Interprétation locale impossible. Vérifiez le modèle et réessayez.')
       }
     } finally {
