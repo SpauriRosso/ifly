@@ -19,7 +19,19 @@ export interface MusicPlan {
     "seed": string;
     "mood": string;
     "mode": string;
+    "timbre": string;
     "tempoBpm": number;
     "beatsPerLoop": number;
+    "sections": MusicSection[] | null;
     "notes": MusicNote[] | null;
+}
+
+/**
+ * MusicSection marks one phrase of the generated form and its relative intensity.
+ */
+export interface MusicSection {
+    "label": string;
+    "startBeat": number;
+    "endBeat": number;
+    "energy": number;
 }

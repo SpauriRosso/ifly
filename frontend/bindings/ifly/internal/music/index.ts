@@ -8,5 +8,6 @@ export {
 
 export type {
     MusicNote,
-    MusicPlan
+    MusicPlan,
+    MusicSection
 } from "./models.js";

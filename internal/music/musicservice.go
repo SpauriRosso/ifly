@@ -19,14 +19,24 @@ type MusicNote struct {
 	Voice    string  `json:"voice"`
 }
 
+// MusicSection marks one phrase of the generated form and its relative intensity.
+type MusicSection struct {
+	Label     string  `json:"label"`
+	StartBeat float64 `json:"startBeat"`
+	EndBeat   float64 `json:"endBeat"`
+	Energy    float64 `json:"energy"`
+}
+
 // MusicPlan is a bounded, repeatable score generated from one image and its optional model description.
 type MusicPlan struct {
-	Seed         string      `json:"seed"`
-	Mood         string      `json:"mood"`
-	Mode         string      `json:"mode"`
-	TempoBPM     int         `json:"tempoBpm"`
-	BeatsPerLoop int         `json:"beatsPerLoop"`
-	Notes        []MusicNote `json:"notes"`
+	Seed         string         `json:"seed"`
+	Mood         string         `json:"mood"`
+	Mode         string         `json:"mode"`
+	Timbre       string         `json:"timbre"`
+	TempoBPM     int            `json:"tempoBpm"`
+	BeatsPerLoop int            `json:"beatsPerLoop"`
+	Sections     []MusicSection `json:"sections"`
+	Notes        []MusicNote    `json:"notes"`
 }
 
 type MusicService struct{}

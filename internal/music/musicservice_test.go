@@ -5,8 +5,20 @@ import (
 	"reflect"
 	"testing"
 
+	"ifly/internal/analysis"
 	"ifly/internal/semantic"
 )
+
+// countLeadNotes takes a score and returns the number of melodic events used to compare visual densities.
+func countLeadNotes(plan MusicPlan) int {
+	count := 0
+	for _, note := range plan.Notes {
+		if note.Voice == "lead" {
+			count++
+		}
+	}
+	return count
+}
 
 // TestMusicServiceCompose checks that one artwork has a repeatable score and opposing scenes produce different scores.
 func TestMusicServiceCompose(t *testing.T) {
@@ -21,8 +33,8 @@ func TestMusicServiceCompose(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(first, second) {
 		t.Fatalf("same artwork changed score: %v", err)
 	}
-	if first.Mood != "calm" || first.TempoBPM < 55 || first.BeatsPerLoop != 32 || len(first.Notes) < 40 {
-		t.Fatalf("invalid calm score: %+v", first)
+	if first.Mood != "calm" || first.TempoBPM < 55 || first.BeatsPerLoop != 64 || len(first.Sections) != 4 || len(first.Notes) < 80 {
+		t.Fatalf("invalid calm score: mood=%s tempo=%d beats=%d sections=%d notes=%d", first.Mood, first.TempoBPM, first.BeatsPerLoop, len(first.Sections), len(first.Notes))
 	}
 	threat, err := service.Compose(dataURL, semantic.SemanticAnalysis{Description: "A threatening violent scene."})
 	if err != nil {
@@ -31,10 +43,26 @@ func TestMusicServiceCompose(t *testing.T) {
 	if threat.Mood != "tense" || threat.Mode == first.Mode || threat.TempoBPM == first.TempoBPM || reflect.DeepEqual(threat.Notes, first.Notes) {
 		t.Fatal("opposing scene produced the same score")
 	}
-	for _, note := range first.Notes {
-		if note.Beat < 0 || note.Beat >= float64(first.BeatsPerLoop) || note.Duration <= 0 || note.MIDI < 40 || note.MIDI > 84 || note.Velocity <= 0 || note.Velocity > 1 {
+	for index, note := range first.Notes {
+		if note.Beat < 0 || note.Beat >= float64(first.BeatsPerLoop) || note.Duration <= 0 || note.MIDI < 36 || note.MIDI > 90 || note.Velocity <= 0 || note.Velocity > 1 {
 			t.Fatalf("unsafe note: %+v", note)
 		}
+		if index > 0 && note.Beat < first.Notes[index-1].Beat {
+			t.Fatal("score events are not sorted")
+		}
+		if note.Voice == "lead" && note.Beat > 60 {
+			t.Fatal("the concluding bar should leave room for silence")
+		}
+	}
+}
+
+// TestComposeMusicUsesVisualComplexity checks that added visual detail changes melodic density for the same interpreted scene.
+func TestComposeMusicUsesVisualComplexity(t *testing.T) {
+	interpretation := semantic.SemanticAnalysis{Description: "A serene landscape."}
+	quiet := composeMusic(analysis.StructuralAnalysis{Complexity: 0.1}, interpretation, [32]byte{})
+	busy := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, interpretation, [32]byte{})
+	if countLeadNotes(busy) <= countLeadNotes(quiet) || busy.TempoBPM <= quiet.TempoBPM {
+		t.Fatal("visual complexity did not alter density and pace")
 	}
 }
 
