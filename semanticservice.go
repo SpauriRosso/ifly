@@ -118,18 +118,18 @@ func (a *LlamaServerAnalyzer) Analyze(ctx context.Context, dataURL string) (Sema
 	schema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"description": map[string]any{"type": "string"},
-			"subjects":    map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+			"description": map[string]any{"type": "string", "minLength": 1, "maxLength": 140},
+			"subjects":    map[string]any{"type": "array", "maxItems": 3, "items": map[string]any{"type": "string", "maxLength": 24}},
 			"uncertain":   map[string]any{"type": "boolean"},
 		},
 		"required":             []string{"description", "subjects", "uncertain"},
 		"additionalProperties": false,
 	}
 	requestBody := map[string]any{
-		"model": "local-vlm", "temperature": 0, "max_tokens": 160, "stream": false,
+		"model": "local-vlm", "temperature": 0, "max_tokens": 192, "stream": false,
 		"response_format": map[string]any{"type": "json_object", "schema": schema},
 		"messages": []any{map[string]any{"role": "user", "content": []any{
-			map[string]any{"type": "text", "text": "Describe this drawing literally. Name only visible subjects and actions. If unclear, mark uncertain. Do not invent context or emotion."},
+			map[string]any{"type": "text", "text": "Write one short factual sentence about the visible image. List at most three visible subjects. Use an empty subjects list for abstract patterns. Return only JSON."},
 			map[string]any{"type": "image_url", "image_url": map[string]any{"url": dataURL}},
 		}}},
 	}
@@ -165,15 +165,29 @@ func (a *LlamaServerAnalyzer) Analyze(ctx context.Context, dataURL string) (Sema
 		return SemanticAnalysis{}, errors.New("local VLM did not return valid JSON")
 	}
 	result.Description = strings.TrimSpace(result.Description)
-	if result.Description == "" || utf8.RuneCountInString(result.Description) > 300 || len(result.Subjects) > 8 {
+	if result.Description == "" || utf8.RuneCountInString(result.Description) > 140 || len(result.Subjects) > 3 {
 		return SemanticAnalysis{}, errors.New("local VLM returned invalid semantic fields")
 	}
+	result.Description = normalizeSemanticDescription(result.Description)
 	for i, subject := range result.Subjects {
 		result.Subjects[i] = strings.TrimSpace(subject)
-		if result.Subjects[i] == "" || utf8.RuneCountInString(result.Subjects[i]) > 60 {
+		if result.Subjects[i] == "" || utf8.RuneCountInString(result.Subjects[i]) > 24 {
 			return SemanticAnalysis{}, errors.New("local VLM returned invalid subjects")
 		}
 	}
 	result.Source = "local VLM (experimental)"
 	return result, nil
+}
+
+// normalizeSemanticDescription takes a bounded model caption and returns one readable sentence, removing any unfinished tail.
+func normalizeSemanticDescription(description string) string {
+	if end := strings.IndexAny(description, ".!?"); end >= 0 {
+		return strings.TrimSpace(description[:end+1])
+	}
+	if utf8.RuneCountInString(description) >= 135 || strings.HasSuffix(description, "-") {
+		if end := strings.LastIndex(description, ","); end > 0 {
+			description = description[:end]
+		}
+	}
+	return strings.TrimRight(strings.TrimSpace(description), " ,-:;") + "."
 }

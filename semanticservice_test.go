@@ -18,6 +18,19 @@ func TestLlamaServerAnalyzerAcceptsValidReply(t *testing.T) {
 			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		var request struct {
+			MaxTokens      int `json:"max_tokens"`
+			ResponseFormat struct {
+				Schema struct {
+					Properties struct {
+						Description struct {
+							MaxLength int `json:"maxLength"`
+						} `json:"description"`
+						Subjects struct {
+							MaxItems int `json:"maxItems"`
+						} `json:"subjects"`
+					} `json:"properties"`
+				} `json:"schema"`
+			} `json:"response_format"`
 			Messages []struct {
 				Content []struct {
 					Type     string `json:"type"`
@@ -33,12 +46,26 @@ func TestLlamaServerAnalyzerAcceptsValidReply(t *testing.T) {
 		if len(request.Messages) != 1 || len(request.Messages[0].Content) != 2 || request.Messages[0].Content[1].Type != "image_url" || !strings.HasPrefix(request.Messages[0].Content[1].ImageURL.URL, "data:image/png;base64,") {
 			t.Error("request did not contain the image")
 		}
+		if request.MaxTokens < 160 || request.ResponseFormat.Schema.Properties.Description.MaxLength == 0 || request.ResponseFormat.Schema.Properties.Subjects.MaxItems == 0 {
+			t.Error("request did not bound the structured model response")
+		}
 		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"{\"description\":\"A tree\",\"subjects\":[\"tree\"],\"uncertain\":false}"}}]}`))
 	}))
 	defer server.Close()
 	result, err := (&LlamaServerAnalyzer{endpoint: server.URL, client: server.Client()}).Analyze(context.Background(), "data:image/png;base64,AA==")
-	if err != nil || result.Description != "A tree" || len(result.Subjects) != 1 || result.Source == "" {
+	if err != nil || result.Description != "A tree." || len(result.Subjects) != 1 || result.Source == "" {
 		t.Fatalf("unexpected semantic result: %+v, %v", result, err)
+	}
+}
+
+// TestNormalizeSemanticDescription checks that a complete first sentence survives and a clipped caption loses its unfinished tail.
+func TestNormalizeSemanticDescription(t *testing.T) {
+	if got := normalizeSemanticDescription("A loading icon is centered. The loading 3"); got != "A loading icon is centered." {
+		t.Fatalf("unexpected first sentence: %q", got)
+	}
+	clipped := "A landscape at sunset with a deer standing in the foreground, surrounded by mountains and trees under a gradient-"
+	if got := normalizeSemanticDescription(clipped); got != "A landscape at sunset with a deer standing in the foreground." {
+		t.Fatalf("unexpected clipped sentence: %q", got)
 	}
 }
 
