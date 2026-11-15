@@ -8,6 +8,8 @@ import { createEdgePreview } from './edgePreview'
 import { cancelInterpretation, interpretPreview } from './semanticAnalysis'
 import { composePreview } from './musicPreview'
 import { MusicPlayer } from './musicPlayer'
+import { INSTRUMENT_LABELS } from './musicInstruments'
+import { TIMBRES, type MusicVoice } from './musicTimbres'
 import './app.css'
 
 const MOOD_LABELS: Record<string, string> = { calm: 'Calme', tense: 'Tendue', energetic: 'Énergique', neutral: 'Neutre' }
@@ -26,6 +28,20 @@ function describeMusicForm(plan: MusicPlan): string {
   return `${plan.sections?.map(section => section.label).join(' → ') ?? 'Forme indisponible'} · ${duration}`
 }
 
+// describeInstrumentPalette takes a score and returns the names of only the instruments actually present in its notes.
+function describeInstrumentPalette(plan: MusicPlan): string {
+  const profile = TIMBRES[plan.timbre]
+  if (!profile) return 'Instruments indisponibles'
+  const names = new Set<string>()
+  for (const note of plan.notes ?? []) {
+    const voice = note.voice as MusicVoice
+    const instrument = profile.voices[voice]?.instrument
+    if (instrument) names.add(INSTRUMENT_LABELS[instrument])
+    else if (voice === 'pulse') names.add('Percussion légère')
+  }
+  return [...names].join(' · ')
+}
+
 // App owns the temporary artwork, its asynchronous analysis, and disposable preview resources.
 function App() {
   const [image, setImage] = useState<ImageData | null>(null)
@@ -35,6 +51,7 @@ function App() {
   const [musicPlan, setMusicPlan] = useState<MusicPlan | null>(null)
   const [musicError, setMusicError] = useState('')
   const [playback, setPlayback] = useState<'stopped' | 'playing' | 'paused'>('stopped')
+  const [audioLoading, setAudioLoading] = useState(false)
   const [edgeUrl, setEdgeUrl] = useState<string | null>(null)
   const [showEdges, setShowEdges] = useState(false)
   const [error, setError] = useState('')
@@ -50,6 +67,7 @@ function App() {
   function discardMusic(): void {
     playerRef.current?.stop()
     setPlayback('stopped')
+    setAudioLoading(false)
     setMusicPlan(null)
     setMusicError('')
   }
@@ -164,6 +182,7 @@ function App() {
         await player.resume()
         if (current === generation.current) setPlayback('playing')
       } else {
+        setAudioLoading(true)
         await player.start(musicPlan)
         if (current === generation.current) setPlayback('playing')
       }
@@ -175,6 +194,7 @@ function App() {
         setMusicError(cause instanceof Error ? cause.message : 'Lecture audio impossible.')
       }
     } finally {
+      if (current === generation.current) setAudioLoading(false)
       playerAction.current = false
     }
   }
@@ -240,12 +260,12 @@ function App() {
           <button className="button" onClick={() => void runAnalysis()} disabled={!image || busy !== null}>{busy === 'analysis' ? 'Analyse en cours…' : 'Analyser'}</button>
           <input ref={inputRef} type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" onChange={handleSelection} className="visually-hidden" aria-label="Choisir une image" />
         </div>
-        <button className="play-state" onClick={() => void togglePlayback()} disabled={!musicPlan || busy !== null} title={musicPlan ? 'Écouter ou mettre en pause l’esquisse musicale' : 'Analysez une image pour préparer la musique'} aria-label={playback === 'playing' ? 'Mettre la musique en pause' : playback === 'paused' ? 'Reprendre la musique' : 'Écouter l’esquisse musicale'}>{playback === 'playing' ? '❚❚' : '▶'} <span>{playback === 'playing' ? 'Pause' : playback === 'paused' ? 'Reprendre' : 'Écouter'}</span></button>
+        <button className="play-state" onClick={() => void togglePlayback()} disabled={!musicPlan || busy !== null || audioLoading} title={musicPlan ? 'Écouter ou mettre en pause la composition' : 'Analysez une image pour préparer la musique'} aria-label={audioLoading ? 'Chargement des instruments' : playback === 'playing' ? 'Mettre la musique en pause' : playback === 'paused' ? 'Reprendre la musique' : 'Écouter la composition'}>{audioLoading ? '…' : playback === 'playing' ? '❚❚' : '▶'} <span>{audioLoading ? 'Chargement…' : playback === 'playing' ? 'Pause' : playback === 'paused' ? 'Reprendre' : 'Écouter'}</span></button>
       </div>
       <div className="canvas-area">
         {image ? <img src={showEdges && edgeUrl ? edgeUrl : image.url} alt={showEdges ? `Carte des contours de ${image.fileName}` : `Œuvre importée : ${image.fileName}`} /> : <div className="canvas-empty"><div className="canvas-mark">✳</div><strong>Déposez une image sur le plan de travail</strong><span>PNG, JPEG ou WebP · 20 Mo maximum</span></div>}
       </div>
-      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{playback === 'playing' ? 'Esquisse musicale en cours' : playback === 'paused' ? 'Musique en pause' : showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Mesures en cours' : busy === 'semantic' ? 'Interprétation locale en cours' : busy === 'music' ? 'Composition en cours' : musicPlan ? 'Esquisse musicale prête' : semantic ? 'Interprétation expérimentale disponible' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
+      <div className="status-bar"><span>{image ? `${image.width} × ${image.height} px · ${image.format}` : 'Aucune image'}</span><span>{audioLoading ? 'Chargement des instruments' : playback === 'playing' ? 'Composition instrumentale en cours' : playback === 'paused' ? 'Musique en pause' : showEdges ? 'Vue des contours' : busy === 'analysis' ? 'Mesures en cours' : busy === 'semantic' ? 'Interprétation locale en cours' : busy === 'music' ? 'Composition en cours' : musicPlan ? 'Composition instrumentale prête' : semantic ? 'Interprétation expérimentale disponible' : analysis ? 'Analyse structurelle terminée' : 'Prêt'}</span></div>
     </section>
 
     <aside className="inspector" aria-label="Analyse et propriétés">
@@ -276,11 +296,12 @@ function App() {
         <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span className={semantic ? 'done' : ''}>02 · Sens expérimental</span><span className={musicPlan ? 'done' : ''}>03 · Musique</span><span>04 · Évolution</span></div>
       </section>
       <section className="inspector-section music-section">
-        <h2>Esquisse musicale · laboratoire</h2>
+        <h2>Composition instrumentale</h2>
         {musicPlan ? <>
           <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
           <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
-          <p className="analysis-note">Écoute de laboratoire liée à cette image. La pièce recommence après sa conclusion.</p>
+          <p className="hint">Instruments : {describeInstrumentPalette(musicPlan)}</p>
+          <p className="analysis-note">Instruments choisis automatiquement pour cette image. La pièce recommence après sa conclusion.</p>
         </> : <p className="hint">La musique est préparée après l’interprétation.</p>}
         {musicError && <p className="error" role="alert">{musicError}</p>}
       </section>

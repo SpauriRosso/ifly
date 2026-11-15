@@ -1,5 +1,11 @@
 export type InstrumentId = 'piano' | 'guitar' | 'bass' | 'violin' | 'cello' | 'flute' | 'woodblock' | 'timpani'
 
+// INSTRUMENT_LABELS gives the automatic score palette short, user-facing names.
+export const INSTRUMENT_LABELS: Record<InstrumentId, string> = {
+  piano: 'Piano', guitar: 'Guitare', bass: 'Contrebasse', violin: 'Violon',
+  cello: 'Violoncelle', flute: 'Flûte', woodblock: 'Woodblock', timpani: 'Timbales',
+}
+
 export interface InstrumentSample {
   midi: number
   file: string
