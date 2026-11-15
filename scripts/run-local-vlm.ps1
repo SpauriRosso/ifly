@@ -8,4 +8,4 @@ if (-not (Test-Path -LiteralPath $server) -or -not (Test-Path -LiteralPath $mode
     throw 'Local VLM files are missing. Run scripts/setup-local-vlm.ps1 first.'
 }
 
-& $server --model $model --mmproj $projector --no-mmproj-offload --n-gpu-layers 0 --host 127.0.0.1 --port 11480 --ctx-size 2048
+& $server --model $model --mmproj $projector --no-mmproj-offload --n-gpu-layers 0 --host 127.0.0.1 --port 11480 --ctx-size 2048 --cors-origins localhost
