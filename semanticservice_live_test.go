@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"image"
+	_ "image/jpeg"
 	"image/png"
 	"os"
 	"testing"
