@@ -1,8 +1,8 @@
 import { AnalysisService } from '../bindings/changeme'
 import type { StructuralAnalysis } from '../bindings/changeme/models'
 
-// analyzePreview downsamples a validated local image and asks Go for deterministic structural metrics.
-export async function analyzePreview(url: string): Promise<StructuralAnalysis> {
+// prepareAnalysisImage downsamples a validated preview into a bounded PNG for local Go analysis.
+export async function prepareAnalysisImage(url: string): Promise<string> {
   const response = await fetch(url)
   const bitmap = await createImageBitmap(await response.blob(), { imageOrientation: 'from-image' })
   try {
@@ -15,8 +15,13 @@ export async function analyzePreview(url: string): Promise<StructuralAnalysis> {
     context.fillStyle = '#ffffff'
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-    return await AnalysisService.Analyze(canvas.toDataURL('image/png'))
+    return canvas.toDataURL('image/png')
   } finally {
     bitmap.close()
   }
+}
+
+// analyzePreview asks Go for deterministic structural measurements of a bounded local PNG.
+export async function analyzePreview(url: string): Promise<StructuralAnalysis> {
+  return AnalysisService.Analyze(await prepareAnalysisImage(url))
 }
