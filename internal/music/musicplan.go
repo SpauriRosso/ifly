@@ -5,8 +5,8 @@ import (
 	"strings"
 	"unicode"
 
-	"changeme/internal/analysis"
-	"changeme/internal/semantic"
+	"ifly/internal/analysis"
+	"ifly/internal/semantic"
 )
 
 type musicalCharacter struct {

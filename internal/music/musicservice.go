@@ -6,8 +6,8 @@ import (
 	"errors"
 	"unicode/utf8"
 
-	"changeme/internal/analysis"
-	"changeme/internal/semantic"
+	"ifly/internal/analysis"
+	"ifly/internal/semantic"
 )
 
 // MusicNote is one scheduled synthesizer event measured in beats from the start of a loop.

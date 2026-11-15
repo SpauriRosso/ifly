@@ -1,5 +1,5 @@
-import { SemanticService } from '../bindings/changeme/internal/semantic'
-import type { SemanticAnalysis } from '../bindings/changeme/internal/semantic/models'
+import { SemanticService } from '../bindings/ifly/internal/semantic'
+import type { SemanticAnalysis } from '../bindings/ifly/internal/semantic/models'
 import { prepareAnalysisImage } from './structuralAnalysis'
 
 // interpretPreview sends a bounded local PNG to Go and returns the validated, unverified VLM description.

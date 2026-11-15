@@ -16,8 +16,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"changeme/internal/analysis"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"ifly/internal/analysis"
 )
 
 // SemanticAnalysis is an unverified local model description, separate from measured visual features.

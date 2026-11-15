@@ -10,15 +10,8 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as $models from "./models.js";
 
 /**
- * Analyze validates a bounded PNG and runs one local inference at a time with a fixed timeout.
+ * Analyze decodes a small PNG data URL and returns deterministic visual measurements or an error.
  */
-export function Analyze(dataURL: string): $CancellablePromise<$models.SemanticAnalysis> {
-    return $Call.ByID(2856502257, dataURL);
-}
-
-/**
- * Cancel stops the current inference request without changing previously completed results.
- */
-export function Cancel(): $CancellablePromise<void> {
-    return $Call.ByID(2749901345);
+export function Analyze(dataURL: string): $CancellablePromise<$models.StructuralAnalysis> {
+    return $Call.ByID(313267835, dataURL);
 }

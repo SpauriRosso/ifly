@@ -1,4 +1,4 @@
-module changeme
+module ifly
 
 go 1.26.0
 

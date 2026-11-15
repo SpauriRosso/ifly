@@ -4,10 +4,10 @@ import (
 	"embed"
 	"log"
 
-	"changeme/internal/analysis"
-	"changeme/internal/music"
-	"changeme/internal/semantic"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"ifly/internal/analysis"
+	"ifly/internal/music"
+	"ifly/internal/semantic"
 )
 
 // assets contains the built React application served by the Wails webview.

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"changeme/internal/semantic"
+	"ifly/internal/semantic"
 )
 
 // TestMusicServiceCompose checks that one artwork has a repeatable score and opposing scenes produce different scores.
