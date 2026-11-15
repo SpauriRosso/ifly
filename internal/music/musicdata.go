@@ -10,6 +10,7 @@ type musicalCharacter struct {
 	mode         string
 	timbre       string
 	baseTempo    int
+	tempoArc     [4]int
 	scale        []int
 	progression  [4]chordSpec
 	bridge       [4]chordSpec
@@ -23,6 +24,7 @@ type musicalCharacter struct {
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {
 		mood: "calm", mode: "pentatonic", timbre: "warm", baseTempo: 64,
+		tempoArc:     [4]int{0, 3, 6, -3},
 		scale:        []int{0, 2, 4, 7, 9},
 		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {0, 4}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {7, 4}, {7, 4}},
@@ -32,6 +34,7 @@ var musicalStyles = map[string]musicalCharacter{
 	},
 	"tense": {
 		mood: "tense", mode: "minor", timbre: "dark", baseTempo: 98,
+		tempoArc:     [4]int{0, 4, 9, -4},
 		scale:        []int{0, 2, 3, 5, 7, 8, 10},
 		progression:  [4]chordSpec{{0, 3}, {8, 4}, {10, 4}, {7, 4}},
 		bridge:       [4]chordSpec{{5, 3}, {8, 4}, {10, 4}, {7, 4}},
@@ -41,6 +44,7 @@ var musicalStyles = map[string]musicalCharacter{
 	},
 	"energetic": {
 		mood: "energetic", mode: "major", timbre: "bright", baseTempo: 106,
+		tempoArc:     [4]int{0, 5, 10, -2},
 		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {9, 3}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {7, 4}, {7, 4}},
@@ -50,6 +54,7 @@ var musicalStyles = map[string]musicalCharacter{
 	},
 	"neutral": {
 		mood: "neutral", mode: "dorian", timbre: "soft", baseTempo: 78,
+		tempoArc:     [4]int{0, 3, 7, -3},
 		scale:        []int{0, 2, 3, 5, 7, 9, 10},
 		progression:  [4]chordSpec{{0, 3}, {5, 4}, {10, 4}, {0, 3}},
 		bridge:       [4]chordSpec{{10, 4}, {5, 4}, {7, 3}, {7, 3}},

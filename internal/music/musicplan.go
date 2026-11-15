@@ -58,10 +58,10 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		motif[i] = (motif[i] + int(digest[i+1]%2)) % len(character.scale)
 	}
 	sections := []MusicSection{
-		{Label: "A", StartBeat: 0, EndBeat: 16, Energy: 0.72},
-		{Label: "A'", StartBeat: 16, EndBeat: 32, Energy: 0.88},
-		{Label: "B", StartBeat: 32, EndBeat: 48, Energy: 1},
-		{Label: "Conclusion", StartBeat: 48, EndBeat: 64, Energy: 0.76},
+		{Label: "A", StartBeat: 0, EndBeat: 16, Energy: 0.72, TempoBPM: tempo + character.tempoArc[0]},
+		{Label: "A'", StartBeat: 16, EndBeat: 32, Energy: 0.88, TempoBPM: tempo + character.tempoArc[1]},
+		{Label: "B", StartBeat: 32, EndBeat: 48, Energy: 1, TempoBPM: tempo + character.tempoArc[2]},
+		{Label: "Conclusion", StartBeat: 48, EndBeat: 64, Energy: 0.76, TempoBPM: tempo + character.tempoArc[3]},
 	}
 	notes := make([]MusicNote, 0, 176)
 	var previousVoicing [3]int

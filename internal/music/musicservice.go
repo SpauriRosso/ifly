@@ -25,6 +25,7 @@ type MusicSection struct {
 	StartBeat float64 `json:"startBeat"`
 	EndBeat   float64 `json:"endBeat"`
 	Energy    float64 `json:"energy"`
+	TempoBPM  int     `json:"tempoBpm"`
 }
 
 // MusicPlan is a bounded, repeatable score generated from one image and its optional model description.

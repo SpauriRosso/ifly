@@ -77,6 +77,21 @@ func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 	}
 }
 
+// TestComposeMusicVariesTempo checks that the bridge accelerates and the conclusion settles for contrasting scenes.
+func TestComposeMusicVariesTempo(t *testing.T) {
+	for _, description := range []string{"A serene landscape.", "A threatening scene.", "A lively dancing scene."} {
+		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: description}, [32]byte{})
+		if plan.Sections[0].TempoBPM != plan.TempoBPM || plan.Sections[2].TempoBPM <= plan.Sections[0].TempoBPM || plan.Sections[3].TempoBPM >= plan.Sections[2].TempoBPM {
+			t.Fatalf("tempo arc did not develop for %q: %+v", description, plan.Sections)
+		}
+		for _, section := range plan.Sections {
+			if section.TempoBPM < 40 || section.TempoBPM > 180 {
+				t.Fatalf("tempo outside playable range: %+v", section)
+			}
+		}
+	}
+}
+
 // TestComposeMusicResolvesHome checks that a tense phrase ends on its tonic instead of looping from an unresolved dominant.
 func TestComposeMusicResolvesHome(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
