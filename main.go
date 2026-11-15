@@ -20,6 +20,7 @@ func main() {
 		Services: []application.Service{
 			application.NewService(&AnalysisService{}),
 			application.NewService(NewSemanticService()),
+			application.NewService(&MusicService{}),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
