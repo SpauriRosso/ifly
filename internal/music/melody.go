@@ -2,6 +2,25 @@ package music
 
 import "math"
 
+// melodyRhythmForBar takes the style, visual complexity, and phrase position, then returns a safe variation of that bar's rhythm.
+func melodyRhythmForBar(bar, section int, complexity float64, character musicalCharacter) []float64 {
+	rhythm := append([]float64(nil), character.melodyRhythm[bar%2]...)
+	if complexity < 0.28 && (character.mood == "calm" || character.mood == "neutral") && len(rhythm) > 2 {
+		rhythm = rhythm[:2]
+	}
+	if bar%4 == 3 || (section == 3 && bar%4 >= 2) {
+		return rhythm[:1]
+	}
+	if section == 1 && len(rhythm) > 1 && rhythm[len(rhythm)-1]-rhythm[len(rhythm)-2] > 0.6 {
+		rhythm[len(rhythm)-1] -= 0.25
+	}
+	if section == 2 && complexity >= 0.45 && len(rhythm) > 1 && rhythm[1]-rhythm[0] >= 1 {
+		passingBeat := (rhythm[0] + rhythm[1]) / 2
+		rhythm = append(rhythm[:1], append([]float64{passingBeat}, rhythm[1:]...)...)
+	}
+	return rhythm
+}
+
 // nearestMelodyRegister takes a pitch class in a chosen octave and the previous note, then returns its closest playable octave.
 func nearestMelodyRegister(pitch, previous int) int {
 	if previous == 0 {
@@ -27,13 +46,7 @@ func nearestMelodyRegister(pitch, previous int) int {
 
 // melodyNotes takes one bar's harmony, motif, phrase position, and prior pitch, then returns its shaped lead events and final pitch.
 func melodyNotes(start float64, bar, section, root, chordRoot int, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
-	rhythm := character.melodyRhythm[bar%2]
-	if complexity < 0.28 && (character.mood == "calm" || character.mood == "neutral") && len(rhythm) > 2 {
-		rhythm = rhythm[:2]
-	}
-	if bar%4 == 3 {
-		rhythm = rhythm[:1]
-	}
+	rhythm := melodyRhythmForBar(bar, section, complexity, character)
 	notes := make([]MusicNote, 0, len(rhythm))
 	for index, beat := range rhythm {
 		degree := motif[(bar%2*2+index)%len(motif)]

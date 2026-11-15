@@ -142,6 +142,17 @@ func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
 	}
 }
 
+// TestMelodyRhythmFollowsPhraseArc checks that a detailed image grows in the bridge and thins before the final cadence.
+func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	if countVoiceInSection(plan, "lead", 32, 48) <= countVoiceInSection(plan, "lead", 16, 32) {
+		t.Fatal("the bridge should develop the melodic rhythm")
+	}
+	if countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 32, 48) {
+		t.Fatal("the conclusion should leave more space than the bridge")
+	}
+}
+
 // TestMusicServiceComposeRejectsInvalidImage checks that the score cannot be generated from an unbounded or malformed image.
 func TestMusicServiceComposeRejectsInvalidImage(t *testing.T) {
 	if _, err := (&MusicService{}).Compose("data:image/png;base64,AA==", semantic.SemanticAnalysis{}); err == nil {
