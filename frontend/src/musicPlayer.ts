@@ -42,7 +42,7 @@ function createRoomImpulse(context: AudioContext, seed: string, seconds: number)
   return buffer
 }
 
-// MusicPlayer schedules a bounded Go score with disposable Web Audio nodes and a pauseable audio clock.
+// MusicPlayer schedules one bounded Go score with disposable Web Audio nodes and a pauseable audio clock.
 export class MusicPlayer {
   private context: AudioContext | null = null
   private master: GainNode | null = null
@@ -55,11 +55,14 @@ export class MusicPlayer {
   private timer: number | null = null
   private notes: MusicNote[] = []
   private tempoMap: TempoMap | null = null
-  private loopStart = 0
-  private loopDuration = 0
+  private scoreStart = 0
+  private scoreDuration = 0
   private nextNote = 0
 
-  // start takes a validated score, opens audio during the user's click, and begins its repeating phrase.
+  // constructor takes an optional completion callback and stores it for the natural end of the score.
+  constructor(private readonly onFinished?: () => void) {}
+
+  // start takes a validated score, opens audio during the user's click, and begins its single complete performance.
   async start(plan: MusicPlan): Promise<void> {
     if (this.context) throw new Error('Une lecture est déjà active.')
     if (!plan.notes?.length || plan.notes.length > 320 || plan.tempoBpm < 40 || plan.tempoBpm > 180 || plan.beatsPerLoop < 4 || plan.beatsPerLoop > 128) {
@@ -101,7 +104,7 @@ export class MusicPlayer {
     this.loadController = loadController
     this.notes = notes
     this.tempoMap = tempoMap
-    this.loopDuration = tempoMap.loopSeconds
+    this.scoreDuration = tempoMap.loopSeconds
     this.nextNote = 0
     try {
       await context.resume()
@@ -109,7 +112,7 @@ export class MusicPlayer {
       if (this.context !== context) return
       this.samples = samples
       this.loadController = null
-      this.loopStart = context.currentTime + 0.08
+      this.scoreStart = context.currentTime + 0.08
       this.schedule()
       this.timer = window.setInterval(() => this.schedule(), 75)
     } catch (cause) {
@@ -157,21 +160,21 @@ export class MusicPlayer {
     }
   }
 
-  // schedule places notes just ahead of the audio clock and returns without waiting for playback.
+  // schedule places remaining notes ahead of the audio clock and ends playback after the final reverb tail.
   private schedule(): void {
     const context = this.context
     const tempoMap = this.tempoMap
     if (!context || !tempoMap || context.state !== 'running' || !this.notes.length) return
     const horizon = context.currentTime + 0.25
-    while (this.loopStart + secondsAtBeat(tempoMap, this.notes[this.nextNote].beat) <= horizon) {
+    while (this.nextNote < this.notes.length && this.scoreStart + secondsAtBeat(tempoMap, this.notes[this.nextNote].beat) <= horizon) {
       const note = this.notes[this.nextNote]
-      const at = this.loopStart + secondsAtBeat(tempoMap, note.beat)
+      const at = this.scoreStart + secondsAtBeat(tempoMap, note.beat)
       if (at >= context.currentTime - 0.02) this.playNote(note, at)
       this.nextNote++
-      if (this.nextNote === this.notes.length) {
-        this.nextNote = 0
-        this.loopStart += this.loopDuration
-      }
+    }
+    if (this.nextNote === this.notes.length && context.currentTime >= this.scoreStart + this.scoreDuration + 2) {
+      this.stop()
+      this.onFinished?.()
     }
   }
 

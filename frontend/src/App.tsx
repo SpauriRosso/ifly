@@ -185,7 +185,7 @@ function App() {
     if (!musicPlan || busy || playerAction.current) return
     playerAction.current = true
     const current = generation.current
-    const player = playerRef.current ?? new MusicPlayer()
+    const player = playerRef.current ?? new MusicPlayer(() => setPlayback('stopped'))
     playerRef.current = player
     try {
       if (playback === 'playing') {
@@ -314,7 +314,7 @@ function App() {
           <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {describeTempoRange(musicPlan)} · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
           <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
           <p className="hint">Instruments : {describeInstrumentPalette(musicPlan)}</p>
-          <p className="analysis-note">Instruments choisis automatiquement pour cette image. La pièce recommence après sa conclusion.</p>
+          <p className="analysis-note">Instruments choisis automatiquement pour cette image. La pièce se termine après sa conclusion.</p>
         </> : <p className="hint">La musique est préparée après l’interprétation.</p>}
         {musicError && <p className="error" role="alert">{musicError}</p>}
       </section>
