@@ -27,7 +27,7 @@ export interface PulseTimbre {
   cutoff: number
 }
 
-// TIMBRES holds fixed synthesis settings so score events and playback logic remain independent of sound design data.
+// TIMBRES holds sampled instruments, envelopes, and effects so score events stay separate from sound design data.
 export const TIMBRES: Record<string, TimbreProfile> = {
   warm: {
     voices: {

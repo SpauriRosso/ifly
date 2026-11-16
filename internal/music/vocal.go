@@ -28,7 +28,7 @@ func shouldHum(structure analysis.StructuralAnalysis, interpretation semantic.Se
 	return false
 }
 
-// hummingNotes takes the interlude bar and tonal center, then returns two long tonic and third responses across that phrase.
+// hummingNotes takes an interlude bar and tonal center, then returns one long tonic or third response on alternating bars.
 func hummingNotes(start float64, section, bar, root int, scale []int, energy float64) []MusicNote {
 	if section != 3 || bar%4 == 1 || bar%4 == 3 {
 		return nil
