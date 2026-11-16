@@ -93,6 +93,9 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		if character.colorTone != 0 && bar%2 == 0 && section != 3 && bar != finalBar {
 			notes = append(notes, MusicNote{start + 0.3, 2.1, chordRoot + character.colorTone, 0.16 * energy, "pad"})
 		}
+		if character.pianoLead && bar != finalBar {
+			notes = append(notes, pianoCadentialSeventh(start, bar, section, chordRoot, chord, energy)...)
+		}
 		notes = append(notes, bassNotes(start, bar, section, finalBar, chordRoot, chord.third, energy, character)...)
 		if !character.pianoLead && section != 3 && bar != finalBar && (section != 5 || bar%4 < 2) {
 			for _, beat := range character.pulseBeats {

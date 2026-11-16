@@ -316,6 +316,26 @@ func TestHarmonyForBarPreparesReturns(t *testing.T) {
 	}
 }
 
+// TestPianoCadenceResolves checks that a dominant seventh leads by step into the next phrase's tonic harmony.
+func TestPianoCadenceResolves(t *testing.T) {
+	for name, character := range musicalStyles {
+		if character.bridge[2].rootOffset != 2 || character.bridge[2].third != 4 || character.bridge[3].rootOffset != 7 || character.bridge[3].third != 4 {
+			t.Fatalf("%s lacks a secondary dominant leading into V", name)
+		}
+		root := 48
+		dominant := harmonyForBar(character, 3, 0, 63)
+		seventh := pianoCadentialSeventh(12, 3, 0, root+dominant.rootOffset, dominant, 1)
+		tonic := harmonyForBar(character, 4, 1, 63)
+		if len(seventh) != 1 {
+			t.Fatalf("%s has no cadential seventh", name)
+		}
+		resolution := absInt((root + tonic.third) - (seventh[0].MIDI - 12))
+		if seventh[0].Beat != 14 || seventh[0].MIDI%12 != (root+5)%12 || tonic.rootOffset != 0 || resolution < 1 || resolution > 2 {
+			t.Fatalf("%s lacks a seventh-to-third cadence: %v then %+v", name, seventh, tonic)
+		}
+	}
+}
+
 // TestVoiceChordPrefersNearInversion checks that chord voices move less than a root-position block change.
 func TestVoiceChordPrefersNearInversion(t *testing.T) {
 	first := voiceChord(48, 4, [3]int{}, false)
