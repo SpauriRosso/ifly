@@ -343,6 +343,25 @@ func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	}
 }
 
+// TestPhraseRhythmDevelopsAndReturns checks that the second statement changes timing while the reprise recalls the opening rhythm.
+func TestPhraseRhythmDevelopsAndReturns(t *testing.T) {
+	character := musicalStyles["energetic"]
+	opening := melodyRhythmForBar(0, 0, 0.6, character)
+	variation := melodyRhythmForBar(4, 1, 0.6, character)
+	returning := melodyRhythmForBar(16, 4, 0.6, character)
+	if reflect.DeepEqual(opening, variation) || !reflect.DeepEqual(opening, returning) {
+		t.Fatalf("phrase rhythm lacks a varied return: %v / %v / %v", opening, variation, returning)
+	}
+	for bar := 0; bar < 24; bar++ {
+		rhythm := melodyRhythmForBar(bar, bar/4, 0.6, character)
+		for index, beat := range rhythm {
+			if beat < 0 || beat >= 4 || (index > 0 && beat <= rhythm[index-1]) {
+				t.Fatalf("invalid rhythm at bar %d: %v", bar, rhythm)
+			}
+		}
+	}
+}
+
 // TestMusicFormBreaksAndReturns checks that the interlude makes space before the returning theme regains its pulse.
 func TestMusicFormBreaksAndReturns(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A lively dancing scene."}, [32]byte{})

@@ -20,6 +20,16 @@ type musicalCharacter struct {
 	arpBeats     []float64
 }
 
+// phraseOffbeats holds small phrase-level timing changes while keeping the first theme and its return recognizable.
+var phraseOffbeats = [6][4]float64{
+	{0, 0, 0, 0},
+	{-0.25, -0.25, 0.25, 0},
+	{0.25, 0, -0.25, 0},
+	{0, 0, 0, 0},
+	{0, 0.25, -0.25, 0},
+	{-0.25, 0, 0, 0},
+}
+
 // musicalStyles keeps musical choices as data so the score generator only arranges and transforms them.
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {

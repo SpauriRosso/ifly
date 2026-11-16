@@ -37,8 +37,8 @@ func melodyRhythmForBar(bar, section int, complexity float64, character musicalC
 	if bar%4 == 3 || (section == 5 && bar%4 >= 2) {
 		return rhythm[:1]
 	}
-	if section == 1 && len(rhythm) > 1 && rhythm[len(rhythm)-1]-rhythm[len(rhythm)-2] > 0.6 {
-		rhythm[len(rhythm)-1] -= 0.25
+	for index := 1; index < len(rhythm); index++ {
+		rhythm[index] += phraseOffbeats[section][bar%4]
 	}
 	if section == 2 && complexity >= 0.45 && len(rhythm) > 1 && rhythm[1]-rhythm[0] >= 1 {
 		passingBeat := (rhythm[0] + rhythm[1]) / 2
