@@ -203,10 +203,11 @@ export class MusicPlayer {
     const envelope = context.createGain()
     const filter = context.createBiquadFilter()
     const duration = Math.max(0.1, Math.min(8, secondsAtBeat(tempoMap, note.beat + note.duration) - secondsAtBeat(tempoMap, note.beat)))
+    const piano = timbre.instrument === 'piano'
     const fluteLead = voice === 'lead' && timbre.instrument === 'flute'
     const slurred = fluteLead && this.fluteSlurs.has(note)
     const attack = Math.min(fluteLead ? (slurred ? FLUTE_EXPRESSION.slurAttackSeconds : FLUTE_EXPRESSION.attackSeconds) : timbre.attack, duration * 0.3)
-    const release = Math.min(fluteLead ? FLUTE_EXPRESSION.releaseSeconds : timbre.release, duration * 0.4)
+    const release = piano ? timbre.release : Math.min(fluteLead ? FLUTE_EXPRESSION.releaseSeconds : timbre.release, duration * 0.4)
     const level = note.velocity * timbre.gain
     const rate = 2 ** ((note.midi - anchor.midi) / 12)
     source.buffer = sample.buffer
@@ -218,18 +219,20 @@ export class MusicPlayer {
     }
     filter.type = 'lowpass'
     filter.frequency.setValueAtTime(timbre.cutoff, at)
-    if (!fluteLead && (voice === 'lead' || voice === 'bass' || voice === 'arp')) filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
+    if (!fluteLead && !piano && (voice === 'lead' || voice === 'bass' || voice === 'arp')) filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
     envelope.gain.setValueAtTime(0, at)
     envelope.gain.linearRampToValueAtTime(fluteLead ? level * 0.88 : level, at + attack)
     if (fluteLead) {
       if (at + duration * 0.5 < at + duration - release) envelope.gain.linearRampToValueAtTime(level, at + duration * 0.5)
       envelope.gain.linearRampToValueAtTime(level * 0.9, at + duration - release)
-    } else if (timbre.instrument === 'piano' || voice === 'pad' || voice === 'hum') {
+    } else if (piano) {
+      envelope.gain.setValueAtTime(level, at + duration)
+    } else if (voice === 'pad' || voice === 'hum') {
       envelope.gain.setValueAtTime(level, at + duration - release)
     } else {
       envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, level * 0.38), at + duration - release)
     }
-    envelope.gain.linearRampToValueAtTime(0, at + duration)
+    envelope.gain.linearRampToValueAtTime(0, at + duration + (piano ? release : 0))
     let vibrato: OscillatorNode | null = null
     let vibratoDepth: GainNode | null = null
     if (fluteLead && duration > FLUTE_EXPRESSION.vibratoDelaySeconds + 0.3) {
@@ -254,7 +257,7 @@ export class MusicPlayer {
       vibratoDepth?.disconnect()
     }
     source.start(at, slurred ? Math.min(FLUTE_EXPRESSION.sampleSkipSeconds, sample.buffer.duration * 0.15) : 0)
-    source.stop(at + duration + 0.01)
+    source.stop(at + duration + (piano ? release : 0) + 0.01)
   }
 
   // playPulse takes one rhythmic event and plays either its local drum sample or a short filtered noise hit.
