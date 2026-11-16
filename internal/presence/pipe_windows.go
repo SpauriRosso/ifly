@@ -2,6 +2,7 @@ package presence
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 // dialDiscord tries Discord's ten local Windows IPC pipes and returns the first open connection.
 func dialDiscord() (io.ReadWriteCloser, error) {
+	var firstError error
 	for index := 0; index < 10; index++ {
 		path := `\\?\pipe\discord-ipc-` + strconv.Itoa(index)
 		name, err := windows.UTF16PtrFromString(path)
@@ -21,6 +23,12 @@ func dialDiscord() (io.ReadWriteCloser, error) {
 		if err == nil {
 			return os.NewFile(uintptr(handle), path), nil
 		}
+		if firstError == nil {
+			firstError = err
+		}
 	}
-	return nil, errors.New("Discord desktop pipe is not available")
+	if firstError == nil {
+		return nil, errors.New("Discord desktop pipe is not available")
+	}
+	return nil, fmt.Errorf("Discord desktop pipe is not available: %w", firstError)
 }
