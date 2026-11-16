@@ -106,7 +106,11 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		currentMotif = turnMotif(currentMotif, episode.motifTurn)
 		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
-		notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)
+		if character.pianoLead {
+			notes = append(notes, pianoLeftHandNotes(start, bar, section, finalBar, voicing, energy, character)...)
+		} else {
+			notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)
+		}
 		previousLeadPitch = finalPitch
 		if useHum {
 			notes = append(notes, hummingNotes(start, section, bar, chordRoot, chord.third, energy)...)
