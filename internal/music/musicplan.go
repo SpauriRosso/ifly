@@ -110,6 +110,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
 		if character.pianoLead {
+			notes = append(notes, pianoRightHandDoubling(lead, chordRoot, chord.third, bar, section)...)
 			notes = append(notes, pianoLeftHandNotes(start, bar, section, finalBar, voicing, energy, character)...)
 		} else {
 			notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)

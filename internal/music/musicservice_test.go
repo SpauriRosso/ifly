@@ -390,6 +390,18 @@ func TestPianoLeftHandStaysBelowMelody(t *testing.T) {
 	}
 }
 
+// TestPianoRightHandDyads checks that phrase arrivals can carry a quieter chord tone without filling reflective passages.
+func TestPianoRightHandDyads(t *testing.T) {
+	arrival := []MusicNote{{Beat: 0, Duration: 1.5, MIDI: 72, Velocity: 0.6, Voice: "lead"}}
+	double := pianoRightHandDoubling(arrival, 48, 4, 0, 0)
+	if len(double) != 1 || double[0].Beat != arrival[0].Beat || double[0].MIDI >= arrival[0].MIDI || !pitchBelongsToChord(double[0].MIDI, chordPitchClasses(48, 4)) || double[0].Velocity >= arrival[0].Velocity {
+		t.Fatalf("right-hand arrival lacks a consonant quieter inner note: %+v", double)
+	}
+	if len(pianoRightHandDoubling(arrival, 48, 4, 1, 0)) != 0 || len(pianoRightHandDoubling(arrival, 48, 4, 0, 3)) != 0 {
+		t.Fatal("piano dyads cover every bar instead of punctuating arrivals")
+	}
+}
+
 // TestCounterlineAnswersLead checks that aligned piano-hand attacks stay in separate registers.
 func TestCounterlineAnswersLead(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
@@ -524,11 +536,19 @@ func TestLeadHasIndependentRegisterAndPhraseVariety(t *testing.T) {
 	for _, scene := range []string{"A serene landscape.", "A lively dancing scene."} {
 		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.2}, semantic.SemanticAnalysis{Description: scene}, [32]byte{})
 		opening := map[int]bool{}
-		previous := -1
+		arrivals := []MusicNote{}
 		for _, note := range plan.Notes {
 			if note.Voice != "lead" {
 				continue
 			}
+			if len(arrivals) == 0 || math.Abs(note.Beat-arrivals[len(arrivals)-1].Beat) > 0.05 {
+				arrivals = append(arrivals, note)
+			} else if note.MIDI > arrivals[len(arrivals)-1].MIDI {
+				arrivals[len(arrivals)-1] = note
+			}
+		}
+		previous := -1
+		for _, note := range arrivals {
 			if note.MIDI < 67 || note.MIDI > 88 {
 				t.Fatalf("lead left its own register for %q: %d", scene, note.MIDI)
 			}
