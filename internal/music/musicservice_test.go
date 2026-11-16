@@ -332,6 +332,22 @@ func TestBridgeIntroducesSecondTheme(t *testing.T) {
 	}
 }
 
+// TestPhraseContoursTransformTheTheme checks that the second statement and bridge transform the motif while the return recalls it.
+func TestPhraseContoursTransformTheTheme(t *testing.T) {
+	motif := [4]int{0, 2, 4, 2}
+	first := melodyDegree(motif, 0, 0, 1, 5)
+	second := melodyDegree(motif, 4, 1, 1, 5)
+	returning := melodyDegree(motif, 16, 4, 1, 5)
+	if first == second || first != returning {
+		t.Fatalf("motif lacks a recognizable variation: %d / %d / %d", first, second, returning)
+	}
+	forward := melodyDegree(motif, 8, 0, 1, 5)
+	bridge := melodyDegree(motif, 8, 2, 1, 5)
+	if forward == bridge {
+		t.Fatalf("bridge did not reverse the motif: %d / %d", forward, bridge)
+	}
+}
+
 // TestMelodyRhythmFollowsPhraseArc checks that a detailed image grows in the bridge and thins before the final cadence.
 func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})

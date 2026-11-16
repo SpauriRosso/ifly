@@ -73,25 +73,35 @@ func nearestMelodyRegister(pitch, previous int) int {
 	return best
 }
 
+// melodyDegree takes a motif and phrase position, then returns a scale degree after the section's contour transformation.
+func melodyDegree(motif [4]int, bar, section, noteIndex, scaleSize int) int {
+	position := bar % 4
+	motifIndex := (position + noteIndex) % len(motif)
+	if section == 2 {
+		motifIndex = (position + 1 + len(motif) - noteIndex%len(motif)) % len(motif)
+	} else if (section == 1 && position == 1) || (section == 4 && position == 2) {
+		motifIndex = (position + len(motif) - noteIndex%len(motif)) % len(motif)
+	}
+	degree := motif[motifIndex]
+	if noteIndex > 0 {
+		degree += phraseDegreeShifts[section][position]
+	}
+	return (degree%scaleSize + scaleSize) % scaleSize
+}
+
 // melodyNotes takes one bar's harmony, motif, phrase position, and prior pitch, then returns its shaped lead events and final pitch.
 func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpec, motif [4]int, previousPitch int, energy, complexity float64, character musicalCharacter) ([]MusicNote, int) {
 	rhythm := melodyRhythmForBar(bar, section, complexity, character)
 	notes := make([]MusicNote, 0, len(rhythm))
 	chordRoot := root + chord.rootOffset
 	for index, beat := range rhythm {
-		degree := motif[(bar%4+index)%len(motif)]
-		if section == 1 && index > 0 {
-			degree = (degree + 1) % len(character.scale)
-		}
-		if section == 4 && index > 0 {
-			degree = (degree + 2) % len(character.scale)
-		}
-		if section == 5 && index > 0 {
-			degree = (degree + len(character.scale) - 1) % len(character.scale)
-		}
+		degree := melodyDegree(motif, bar, section, index, len(character.scale))
 		pitch := root + 24 + character.scale[degree]
 		if index == 0 && bar%2 == 0 {
 			pitch = chordRoot + 24
+			if bar%4 == 2 {
+				pitch += chord.third
+			}
 		} else if index == len(rhythm)-1 && (bar%4 == 3 || section == 5) {
 			interval := chord.third
 			if bar%2 == 1 {

@@ -30,6 +30,16 @@ var phraseOffbeats = [6][4]float64{
 	{-0.25, 0, 0, 0},
 }
 
+// phraseDegreeShifts keeps each section's sequence distinct while reserving the unchanged first bar for the returning theme.
+var phraseDegreeShifts = [6][4]int{
+	{0, 0, 0, 0},
+	{1, 1, 2, 0},
+	{0, 2, 1, 0},
+	{0, 0, 0, 0},
+	{0, 1, 2, 0},
+	{0, -1, -2, 0},
+}
+
 // musicalStyles keeps musical choices as data so the score generator only arranges and transforms them.
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {
