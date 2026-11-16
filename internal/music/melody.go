@@ -22,6 +22,15 @@ func makeBridgeMotif(digest [32]byte, scaleSize int) [4]int {
 	return [4]int{start, peak, peak - 2, int(digest[5] % 2)}
 }
 
+// turnMotif takes a four-note idea and rotation count, then returns a related starting angle for a later episode.
+func turnMotif(motif [4]int, turn int) [4]int {
+	var rotated [4]int
+	for index := range rotated {
+		rotated[index] = motif[(index+turn)%len(motif)]
+	}
+	return rotated
+}
+
 // melodyRhythmForBar takes the style, visual complexity, and phrase position, then returns a safe variation of that bar's rhythm.
 func melodyRhythmForBar(bar, section int, complexity float64, character musicalCharacter) []float64 {
 	rhythm := append([]float64(nil), character.melodyRhythm[bar%2]...)

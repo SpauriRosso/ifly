@@ -47,7 +47,7 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 	return musicalStyles["neutral"]
 }
 
-// composeMusic takes measured structure, tentative semantics, and an image digest and returns a six-phrase score.
+// composeMusic takes measured structure, tentative semantics, and an image digest and returns a long-form score with related episodes.
 func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic.SemanticAnalysis, digest [32]byte) MusicPlan {
 	character := selectMusicalCharacter(interpretation)
 	useHum := shouldHum(structure, interpretation, character)
@@ -56,24 +56,25 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	root := 48 + int(digest[0]%12)
 	motif := makeMotif(digest, len(character.scale))
 	bridgeMotif := makeBridgeMotif(digest, len(character.scale))
-	sections := []MusicSection{
-		{Label: "A", StartBeat: 0, EndBeat: 16, Energy: 0.72, TempoBPM: tempo + character.tempoArc[0]},
-		{Label: "A'", StartBeat: 16, EndBeat: 32, Energy: 0.88, TempoBPM: tempo + character.tempoArc[1]},
-		{Label: "B", StartBeat: 32, EndBeat: 48, Energy: 1, TempoBPM: tempo + character.tempoArc[2]},
-		{Label: "Interlude", StartBeat: 48, EndBeat: 64, Energy: 0.42, TempoBPM: tempo + character.tempoArc[3]},
-		{Label: "Retour", StartBeat: 64, EndBeat: 80, Energy: 0.92, TempoBPM: tempo + character.tempoArc[4]},
-		{Label: "Conclusion", StartBeat: 80, EndBeat: 96, Energy: 0.68, TempoBPM: tempo + character.tempoArc[5]},
+	sections := make([]MusicSection, 0, len(formEpisodes))
+	for index, episode := range formEpisodes {
+		sections = append(sections, MusicSection{
+			Label: episode.label, StartBeat: float64(index * 16), EndBeat: float64((index + 1) * 16),
+			Energy: episode.energy, TempoBPM: tempo + character.tempoArc[episode.role] + episode.tempoShift,
+		})
 	}
-	notes := make([]MusicNote, 0, 256)
+	notes := make([]MusicNote, 0, 700)
 	var previousVoicing [3]int
 	previousLeadPitch := 0
 	finalBar := len(sections)*4 - 1
 	for bar := 0; bar <= finalBar; bar++ {
 		start := float64(bar * 4)
-		section := bar / 4
+		episodeIndex := bar / 4
+		episode := formEpisodes[episodeIndex]
+		section := episode.role
 		chord := harmonyForBar(character, bar, section, finalBar)
 		chordRoot := root + chord.rootOffset
-		energy := sections[section].Energy * phraseDynamics[section][bar%4]
+		energy := sections[episodeIndex].Energy * phraseDynamics[section][bar%4]
 		padLength := padSustainBeats[bar%4]
 		if section == 3 {
 			padLength = 3.4
@@ -100,6 +101,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		if section == 2 || section == 3 {
 			currentMotif = bridgeMotif
 		}
+		currentMotif = turnMotif(currentMotif, episode.motifTurn)
 		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
 		previousLeadPitch = finalPitch

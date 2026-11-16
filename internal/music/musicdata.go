@@ -20,6 +20,34 @@ type musicalCharacter struct {
 	arpBeats     []float64
 }
 
+type formEpisode struct {
+	label      string
+	role       int
+	energy     float64
+	tempoShift int
+	motifTurn  int
+}
+
+// formEpisodes defines a longer one-way arc with recognizable returns and new motif angles instead of copying the first pass.
+var formEpisodes = [...]formEpisode{
+	{"A", 0, 0.72, 0, 0},
+	{"A'", 1, 0.88, 0, 0},
+	{"B", 2, 1.00, 0, 0},
+	{"Interlude", 3, 0.42, 0, 0},
+	{"Retour", 4, 0.92, 0, 0},
+	{"Développement", 1, 0.86, 1, 1},
+	{"B'", 2, 0.96, -2, 1},
+	{"Respiration", 3, 0.38, -4, 1},
+	{"Reprise", 4, 0.90, 0, 1},
+	{"Climax", 2, 1.00, 2, 2},
+	{"Silence", 3, 0.34, -3, 2},
+	{"Dernier retour", 4, 0.84, -1, 0},
+	{"Écho", 0, 0.66, -2, 2},
+	{"Suspension", 3, 0.28, -5, 0},
+	{"Dénouement", 5, 0.58, -3, 1},
+	{"Conclusion", 5, 0.43, -5, 0},
+}
+
 // phraseOffbeats holds small phrase-level timing changes while keeping the first theme and its return recognizable.
 var phraseOffbeats = [6][4]float64{
 	{0, 0, 0, 0},

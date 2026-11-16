@@ -44,7 +44,7 @@ func TestMusicServiceCompose(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(first, second) {
 		t.Fatalf("same artwork changed score: %v", err)
 	}
-	if first.Mood != "calm" || first.TempoBPM < 55 || first.BeatsPerLoop != 96 || len(first.Sections) != 6 || len(first.Notes) < 120 || len(first.Notes) > 320 {
+	if first.Mood != "calm" || first.TempoBPM < 55 || first.BeatsPerLoop != len(formEpisodes)*16 || len(first.Sections) != len(formEpisodes) || len(first.Notes) < 300 || len(first.Notes) > 1200 {
 		t.Fatalf("invalid calm score: mood=%s tempo=%d beats=%d sections=%d notes=%d", first.Mood, first.TempoBPM, first.BeatsPerLoop, len(first.Sections), len(first.Notes))
 	}
 	threat, err := service.Compose(dataURL, semantic.SemanticAnalysis{Description: "A threatening violent scene."})
@@ -61,7 +61,7 @@ func TestMusicServiceCompose(t *testing.T) {
 		if index > 0 && note.Beat < first.Notes[index-1].Beat {
 			t.Fatal("score events are not sorted")
 		}
-		if note.Voice == "lead" && note.Beat > 92 {
+		if note.Voice == "lead" && note.Beat > float64(first.BeatsPerLoop-4) {
 			t.Fatal("the concluding bar should leave room for silence")
 		}
 	}
@@ -90,7 +90,7 @@ func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 			plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.5}, interpretation, digest)
 			root := 48 + int(center)
 			for bar := 0; bar < plan.BeatsPerLoop/4; bar++ {
-				chord := harmonyForBar(character, bar, bar/4, plan.BeatsPerLoop/4-1)
+				chord := harmonyForBar(character, bar, formEpisodes[bar/4].role, plan.BeatsPerLoop/4-1)
 				members := chordPitchClasses(root+chord.rootOffset, chord.third)
 				lead := []MusicNote{}
 				for _, note := range plan.Notes {
@@ -139,7 +139,7 @@ func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 func TestComposeMusicVariesTempo(t *testing.T) {
 	for _, description := range []string{"A serene landscape.", "A threatening scene.", "A lively dancing scene."} {
 		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: description}, [32]byte{})
-		if plan.Sections[0].TempoBPM != plan.TempoBPM || plan.Sections[2].TempoBPM <= plan.Sections[0].TempoBPM || plan.Sections[3].TempoBPM >= plan.Sections[2].TempoBPM || plan.Sections[4].TempoBPM <= plan.Sections[3].TempoBPM || plan.Sections[5].TempoBPM >= plan.Sections[4].TempoBPM {
+		if plan.Sections[0].TempoBPM != plan.TempoBPM || plan.Sections[2].TempoBPM <= plan.Sections[0].TempoBPM || plan.Sections[3].TempoBPM >= plan.Sections[2].TempoBPM || plan.Sections[4].TempoBPM <= plan.Sections[3].TempoBPM || plan.Sections[len(plan.Sections)-1].TempoBPM >= plan.Sections[9].TempoBPM {
 			t.Fatalf("tempo arc did not develop for %q: %+v", description, plan.Sections)
 		}
 		for _, section := range plan.Sections {
@@ -150,11 +150,25 @@ func TestComposeMusicVariesTempo(t *testing.T) {
 	}
 }
 
+// TestLongFormDuration checks that calm and active scenes both produce a complete performance longer than two minutes.
+func TestLongFormDuration(t *testing.T) {
+	for _, description := range []string{"A pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {
+		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: description}, [32]byte{})
+		seconds := 0.0
+		for _, section := range plan.Sections {
+			seconds += (section.EndBeat - section.StartBeat) * 60 / float64(section.TempoBPM)
+		}
+		if seconds < 120 || len(plan.Sections) != 16 {
+			t.Fatalf("short or incomplete form for %q: %.1f seconds, %d phrases", description, seconds, len(plan.Sections))
+		}
+	}
+}
+
 // TestComposeMusicResolvesHome checks that a tense phrase ends on its tonic instead of looping from an unresolved dominant.
 func TestComposeMusicResolvesHome(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
 	for _, note := range plan.Notes {
-		if note.Beat == 92 && note.Voice == "pad" && note.MIDI%12 == 0 {
+		if note.Beat == float64(plan.BeatsPerLoop-4) && note.Voice == "pad" && note.MIDI%12 == 0 {
 			return
 		}
 	}
@@ -165,12 +179,13 @@ func TestComposeMusicResolvesHome(t *testing.T) {
 func TestHarmonyForBarPreparesReturns(t *testing.T) {
 	for name, character := range musicalStyles {
 		for _, section := range []int{0, 4} {
-			cadence := harmonyForBar(character, section*4+3, section, 23)
+			cadence := harmonyForBar(character, section*4+3, section, len(formEpisodes)*4-1)
 			if cadence.rootOffset != character.bridge[3].rootOffset || cadence.rootOffset == 0 {
 				t.Fatalf("%s section %d lacks a dominant preparation: %+v", name, section, cadence)
 			}
 		}
-		final := harmonyForBar(character, 23, 5, 23)
+		finalBar := len(formEpisodes)*4 - 1
+		final := harmonyForBar(character, finalBar, 5, finalBar)
 		if final.rootOffset != 0 {
 			t.Fatalf("%s ending does not resolve: %+v", name, final)
 		}
@@ -198,7 +213,7 @@ func TestVoiceChordPrefersNearInversion(t *testing.T) {
 func TestArpeggioBuildsAndRecedes(t *testing.T) {
 	calm := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
 	tense := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
-	if countVoiceInSection(calm, "arp", 0, 16) != 0 || countVoiceInSection(calm, "arp", 32, 48) == 0 || countVoiceInSection(calm, "arp", 48, 64) != 0 || countVoiceInSection(calm, "arp", 88, 96) != 0 {
+	if countVoiceInSection(calm, "arp", 0, 16) != 0 || countVoiceInSection(calm, "arp", 32, 48) == 0 || countVoiceInSection(calm, "arp", 48, 64) != 0 || countVoiceInSection(calm, "arp", float64(calm.BeatsPerLoop-8), float64(calm.BeatsPerLoop)) != 0 {
 		t.Fatal("the calm counterline did not follow the phrase arc")
 	}
 	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(calm, "arp", 32, 48) {
@@ -335,7 +350,7 @@ func TestLeadHasIndependentRegisterAndPhraseVariety(t *testing.T) {
 			if note.Beat < 16 {
 				opening[note.MIDI] = true
 			}
-			if note.MIDI == previous && note.Beat < 92 {
+			if note.MIDI == previous && note.Beat < float64(plan.BeatsPerLoop-4) {
 				t.Fatalf("lead repeated one pitch without a melodic step for %q", scene)
 			}
 			previous = note.MIDI
@@ -412,7 +427,7 @@ func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	if countVoiceInSection(plan, "lead", 32, 48) <= countVoiceInSection(plan, "lead", 16, 32) {
 		t.Fatal("the bridge should develop the melodic rhythm")
 	}
-	if countVoiceInSection(plan, "lead", 80, 96) >= countVoiceInSection(plan, "lead", 32, 48) {
+	if countVoiceInSection(plan, "lead", float64(plan.BeatsPerLoop-16), float64(plan.BeatsPerLoop)) >= countVoiceInSection(plan, "lead", 32, 48) {
 		t.Fatal("the conclusion should leave more space than the bridge")
 	}
 }
@@ -426,8 +441,8 @@ func TestPhraseRhythmDevelopsAndReturns(t *testing.T) {
 	if reflect.DeepEqual(opening, variation) || !reflect.DeepEqual(opening, returning) {
 		t.Fatalf("phrase rhythm lacks a varied return: %v / %v / %v", opening, variation, returning)
 	}
-	for bar := 0; bar < 24; bar++ {
-		rhythm := melodyRhythmForBar(bar, bar/4, 0.6, character)
+	for bar := 0; bar < len(formEpisodes)*4; bar++ {
+		rhythm := melodyRhythmForBar(bar, formEpisodes[bar/4].role, 0.6, character)
 		for index, beat := range rhythm {
 			if beat < 0 || beat >= 4 || (index > 0 && beat <= rhythm[index-1]) {
 				t.Fatalf("invalid rhythm at bar %d: %v", bar, rhythm)
@@ -454,8 +469,9 @@ func TestPhraseDynamicsBreathe(t *testing.T) {
 	if pads[1].Duration >= pads[0].Duration || pads[3].Duration >= pads[2].Duration {
 		t.Fatalf("accompaniment does not leave phrase space: %+v %+v %+v %+v", pads[0], pads[1], pads[2], pads[3])
 	}
-	if pads[23].Velocity >= pads[20].Velocity {
-		t.Fatalf("ending does not fade: %+v %+v", pads[20], pads[23])
+	lastBar := plan.BeatsPerLoop/4 - 1
+	if pads[lastBar].Velocity >= pads[lastBar-3].Velocity {
+		t.Fatalf("ending does not fade: %+v %+v", pads[lastBar-3], pads[lastBar])
 	}
 }
 
@@ -468,7 +484,7 @@ func TestMusicFormBreaksAndReturns(t *testing.T) {
 	if countVoiceInSection(plan, "pulse", 48, 64) != 0 || countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 64, 80) || countVoiceInSection(plan, "pulse", 64, 80) == 0 {
 		t.Fatal("the interlude and return do not contrast")
 	}
-	if len(plan.Notes) > 320 {
+	if len(plan.Notes) > 1200 {
 		t.Fatalf("score exceeds the player event limit: %d", len(plan.Notes))
 	}
 }
@@ -483,7 +499,7 @@ func TestHummingDependsOnScene(t *testing.T) {
 	if countVoiceInSection(calm, "hum", 48, 64) != 2 || countVoiceInSection(person, "hum", 48, 64) != 2 {
 		t.Fatal("suitable calm or human scenes need a sparse vocal response")
 	}
-	if countVoiceInSection(threat, "hum", 0, 96) != 0 || countVoiceInSection(busy, "hum", 0, 96) != 0 {
+	if countVoiceInSection(threat, "hum", 0, float64(threat.BeatsPerLoop)) != 0 || countVoiceInSection(busy, "hum", 0, float64(busy.BeatsPerLoop)) != 0 {
 		t.Fatal("vocal response should be omitted for tense or complex scenes")
 	}
 }

@@ -11,7 +11,7 @@ export interface TempoMap {
 
 // createTempoMap takes contiguous scored sections and their loop length, then returns validated time anchors for playback.
 export function createTempoMap(sections: MusicSection[] | null, beatsPerLoop: number): TempoMap {
-  if (!sections?.length || sections.length > 8) throw new Error('Le parcours de tempo est invalide.')
+  if (!sections?.length || sections.length > 16) throw new Error('Le parcours de tempo est invalide.')
   const timed: TimedSection[] = []
   let expectedBeat = 0
   let elapsed = 0
