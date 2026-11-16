@@ -12,6 +12,7 @@ import { MusicPlayer } from './musicPlayer'
 import { INSTRUMENT_LABELS } from './musicInstruments'
 import { TIMBRES, type MusicVoice } from './musicTimbres'
 import { createTempoMap } from './musicTiming'
+import brandMark from './assets/ifly-brand.png'
 import './app.css'
 
 const MOOD_LABELS: Record<string, string> = { calm: 'Calme', tense: 'Tendue', energetic: 'Énergique', neutral: 'Neutre' }
@@ -251,7 +252,7 @@ function App() {
 
   return <main className="app-shell" onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
     <header className="app-header">
-      <div className="brand">IFLY<span>.</span></div>
+      <div className="brand"><img src={brandMark} alt="" />IFLY<span>.</span></div>
       <span className="header-divider" />
       <span className="header-title">Atelier d’image</span>
       <span className="header-file">{image?.fileName ?? 'Aucune œuvre ouverte'}</span>
