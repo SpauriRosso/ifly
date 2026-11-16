@@ -96,20 +96,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 			notes = append(notes, MusicNote{start, padLength, pitch, 0.3 * energy, "pad"})
 		}
 		notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character)...)
-		bassBeats := character.bassBeats
-		if section == 3 && len(bassBeats) > 1 {
-			bassBeats = bassBeats[:1]
-		}
-		for _, beat := range bassBeats {
-			if bar == finalBar && beat > 0 {
-				continue
-			}
-			pitch := chordRoot - 12
-			if beat > 0 {
-				pitch += 7
-			}
-			notes = append(notes, MusicNote{start + beat, 1.4, pitch, 0.58 * energy, "bass"})
-		}
+		notes = append(notes, bassNotes(start, bar, section, finalBar, chordRoot, chord.third, energy, character)...)
 		if section != 3 && bar != finalBar && (section != 5 || bar%4 < 2) {
 			for _, beat := range character.pulseBeats {
 				notes = append(notes, MusicNote{start + beat, 0.18, root, 0.32 * energy, "pulse"})

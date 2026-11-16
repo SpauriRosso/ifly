@@ -132,6 +132,27 @@ func TestArpeggioBuildsAndRecedes(t *testing.T) {
 	}
 }
 
+// TestBassLineChangesItsResponse checks that an active bass voice uses different chord tones and the calm bridge adds movement.
+func TestBassLineChangesItsResponse(t *testing.T) {
+	character := musicalStyles["energetic"]
+	intervals := map[int]bool{}
+	for bar := 0; bar < 4; bar++ {
+		chord := character.progression[bar]
+		notes := bassNotes(float64(bar*4), bar, 0, 23, 48+chord.rootOffset, chord.third, 1, character)
+		if len(notes) != 2 || notes[0].Beat == notes[1].Beat {
+			t.Fatalf("energetic bass lacks a distinct response in bar %d: %+v", bar, notes)
+		}
+		intervals[notes[1].MIDI-notes[0].MIDI] = true
+	}
+	if len(intervals) < 3 {
+		t.Fatalf("bass responses repeat one interval: %v", intervals)
+	}
+	calm := musicalStyles["calm"]
+	if len(bassNotes(0, 0, 0, 23, 48, 4, 1, calm)) != 1 || len(bassNotes(36, 9, 2, 23, 53, 4, 1, calm)) != 2 {
+		t.Fatal("calm bass did not develop between opening and bridge")
+	}
+}
+
 // TestMelodyDevelopsWithoutRegisterJumps checks that the reprise changes the theme while consecutive pitches stay nearby.
 func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
