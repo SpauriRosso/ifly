@@ -14,7 +14,7 @@ func avoidsLeadOnsets(beat float64, lead []MusicNote) bool {
 
 // arpeggioNotes takes a bar's harmony, phrase position, and lead notes, then places light counterline answers away from lead attacks.
 func arpeggioNotes(start float64, section, bar int, voicing [3]int, energy float64, character musicalCharacter, lead []MusicNote) []MusicNote {
-	if section == 0 || section == 3 || (section == 1 && bar%4 < 2) || (section == 5 && bar%4 >= 2) {
+	if (section == 0 && !character.pianoLead) || section == 3 || (section == 1 && bar%4 < 2 && !character.pianoLead) || (section == 5 && bar%4 >= 2) {
 		return nil
 	}
 	rhythm := character.arpBeats
@@ -35,6 +35,9 @@ func arpeggioNotes(start float64, section, bar int, voicing [3]int, energy float
 			voiceIndex = (bar + len(voicing) - index%len(voicing)) % len(voicing)
 		}
 		pitch := voicing[voiceIndex]
+		if character.pianoLead {
+			pitch -= 12
+		}
 		velocity := 0.34 * energy
 		if section == 2 {
 			velocity = 0.4 * energy

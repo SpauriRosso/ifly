@@ -316,15 +316,40 @@ func TestVoiceChordPrefersNearInversion(t *testing.T) {
 	}
 }
 
-// TestArpeggioBuildsAndRecedes checks that the counterline enters after the opening and withdraws before the final cadence.
+// TestArpeggioBuildsAndRecedes checks that quiet piano accompaniment develops after a sparse opening and withdraws before the final cadence.
 func TestArpeggioBuildsAndRecedes(t *testing.T) {
 	calm := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
 	tense := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
-	if countVoiceInSection(calm, "arp", 0, 16) != 0 || countVoiceInSection(calm, "arp", 32, 48) == 0 || countVoiceInSection(calm, "arp", 48, 64) != 0 || countVoiceInSection(calm, "arp", float64(calm.BeatsPerLoop-8), float64(calm.BeatsPerLoop)) != 0 {
+	opening := countVoiceInSection(calm, "arp", 0, 16)
+	bridge := countVoiceInSection(calm, "arp", 32, 48)
+	if opening == 0 || bridge <= opening || countVoiceInSection(calm, "arp", 48, 64) != 0 || countVoiceInSection(calm, "arp", float64(calm.BeatsPerLoop-8), float64(calm.BeatsPerLoop)) != 0 {
 		t.Fatal("the calm counterline did not follow the phrase arc")
 	}
-	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(calm, "arp", 32, 48) {
-		t.Fatal("the tense bridge should carry more counterline motion")
+	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(tense, "arp", 0, 16) {
+		t.Fatal("the tense bridge should develop beyond its opening")
+	}
+}
+
+// TestPianoLeftHandStaysBelowMelody checks that broken-chord piano responses occupy a lower register than the lead.
+func TestPianoLeftHandStaysBelowMelody(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	left, right := 0, 0
+	for _, note := range plan.Notes {
+		if note.Beat >= 16 {
+			continue
+		}
+		if note.Voice == "arp" {
+			left++
+			if note.MIDI < 44 || note.MIDI >= 67 {
+				t.Fatalf("left-hand response overlaps the melody register: %+v", note)
+			}
+		}
+		if note.Voice == "lead" {
+			right++
+		}
+	}
+	if left < 4 || right < 4 {
+		t.Fatalf("piano lacks independent left and right hands: %d / %d", left, right)
 	}
 }
 
