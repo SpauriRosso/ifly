@@ -71,20 +71,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	for bar := 0; bar <= finalBar; bar++ {
 		start := float64(bar * 4)
 		section := bar / 4
-		chord := character.progression[bar%4]
-		if section == 2 || (section == 1 && bar%4 == 3) || (section == 4 && bar%4 == 2) {
-			chord = character.bridge[bar%4]
-		}
-		if section == 3 {
-			chord = character.bridge[(bar+2)%4]
-		}
-		if bar == finalBar {
-			third := 4
-			if character.mode == "minor" || character.mode == "dorian" {
-				third = 3
-			}
-			chord = chordSpec{rootOffset: 0, third: third}
-		}
+		chord := harmonyForBar(character, bar, section, finalBar)
 		chordRoot := root + chord.rootOffset
 		energy := sections[section].Energy
 		padLength := 3.75

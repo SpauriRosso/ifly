@@ -5,6 +5,29 @@ import (
 	"sort"
 )
 
+// harmonyForBar takes a style and form position, then chooses a phrase chord that prepares a dominant before each return and resolves the final bar.
+func harmonyForBar(character musicalCharacter, bar, section, finalBar int) chordSpec {
+	position := bar % 4
+	chord := character.progression[position]
+	if section == 2 || (section == 1 && position == 3) || (section == 4 && position == 2) {
+		chord = character.bridge[position]
+	}
+	if section == 3 {
+		chord = character.bridge[(position+2)%4]
+	}
+	if (section == 0 || section == 4) && position == 3 {
+		chord = character.bridge[3]
+	}
+	if bar == finalBar {
+		third := 4
+		if character.mode == "minor" || character.mode == "dorian" {
+			third = 3
+		}
+		chord = chordSpec{rootOffset: 0, third: third}
+	}
+	return chord
+}
+
 // voiceChord takes a triad and the prior three pitches, then returns a nearby inversion for smooth harmonic motion.
 func voiceChord(root, third int, previous [3]int, hasPrevious bool) [3]int {
 	base := [3]int{root + 12, root + 12 + third, root + 19}

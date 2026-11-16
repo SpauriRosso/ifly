@@ -103,6 +103,22 @@ func TestComposeMusicResolvesHome(t *testing.T) {
 	t.Fatal("final harmony did not resolve to the tonic")
 }
 
+// TestHarmonyForBarPreparesReturns checks that complete phrases move to a dominant before returning to the tonic.
+func TestHarmonyForBarPreparesReturns(t *testing.T) {
+	for name, character := range musicalStyles {
+		for _, section := range []int{0, 4} {
+			cadence := harmonyForBar(character, section*4+3, section, 23)
+			if cadence.rootOffset != character.bridge[3].rootOffset || cadence.rootOffset == 0 {
+				t.Fatalf("%s section %d lacks a dominant preparation: %+v", name, section, cadence)
+			}
+		}
+		final := harmonyForBar(character, 23, 5, 23)
+		if final.rootOffset != 0 {
+			t.Fatalf("%s ending does not resolve: %+v", name, final)
+		}
+	}
+}
+
 // TestVoiceChordPrefersNearInversion checks that chord voices move less than a root-position block change.
 func TestVoiceChordPrefersNearInversion(t *testing.T) {
 	first := voiceChord(48, 4, [3]int{}, false)
