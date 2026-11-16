@@ -93,7 +93,6 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		if character.colorTone != 0 && bar%2 == 0 && section != 3 && bar != finalBar {
 			notes = append(notes, MusicNote{start + 0.3, 2.1, chordRoot + character.colorTone, 0.16 * energy, "pad"})
 		}
-		notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character)...)
 		notes = append(notes, bassNotes(start, bar, section, finalBar, chordRoot, chord.third, energy, character)...)
 		if section != 3 && bar != finalBar && (section != 5 || bar%4 < 2) {
 			for _, beat := range character.pulseBeats {
@@ -107,6 +106,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		currentMotif = turnMotif(currentMotif, episode.motifTurn)
 		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
+		notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)
 		previousLeadPitch = finalPitch
 		if useHum {
 			notes = append(notes, hummingNotes(start, section, bar, chordRoot, chord.third, energy)...)

@@ -2,6 +2,7 @@ package music
 
 import (
 	"image"
+	"math"
 	"reflect"
 	"testing"
 
@@ -236,6 +237,22 @@ func TestArpeggioBuildsAndRecedes(t *testing.T) {
 	}
 	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(calm, "arp", 32, 48) {
 		t.Fatal("the tense bridge should carry more counterline motion")
+	}
+}
+
+// TestCounterlineAnswersLead checks that the accompaniment keeps its attacks away from the main instrument.
+func TestCounterlineAnswersLead(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
+	for _, counterline := range plan.Notes {
+		if counterline.Voice != "arp" {
+			continue
+		}
+		bar := int(counterline.Beat / 4)
+		for _, lead := range plan.Notes {
+			if lead.Voice == "lead" && int(lead.Beat/4) == bar && math.Abs(lead.Beat-counterline.Beat) < 0.3 {
+				t.Fatalf("counterline masks the lead in bar %d: %+v %+v", bar, lead, counterline)
+			}
+		}
 	}
 }
 
