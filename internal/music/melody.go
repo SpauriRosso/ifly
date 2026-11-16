@@ -80,9 +80,9 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 			degree = (degree + len(character.scale) - 1) % len(character.scale)
 		}
 		pitch := root + 12 + character.scale[degree]
-		if index == 0 {
+		if index == 0 && bar%2 == 0 {
 			pitch = chordRoot + 12
-		} else if index == len(rhythm)-1 {
+		} else if index == len(rhythm)-1 && (bar%4 == 3 || section == 5) {
 			interval := chord.third
 			if bar%2 == 1 {
 				interval = 7
@@ -93,6 +93,13 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 			pitch = root + 12
 		}
 		pitch = nearestMelodyRegister(pitch, previousPitch)
+		if pitch == previousPitch && bar != finalBar {
+			if index == 0 {
+				pitch = nearestMelodyRegister(chordRoot+12+chord.third, previousPitch)
+			} else {
+				pitch = nearestMelodyRegister(root+12+character.scale[(degree+1)%len(character.scale)], previousPitch)
+			}
+		}
 		previousPitch = pitch
 		duration := 1.2
 		if index+1 < len(rhythm) {

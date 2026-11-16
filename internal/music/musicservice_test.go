@@ -157,7 +157,7 @@ func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
 	}
 }
 
-// TestMotifAndMelodicAnswerKeepTheirShape checks that a pentatonic peak does not wrap and the bar answer lands on its chord.
+// TestMotifAndMelodicAnswerKeepTheirShape checks that a pentatonic peak does not wrap, quiet notes use the motif, and phrase endings land on their chord.
 func TestMotifAndMelodicAnswerKeepTheirShape(t *testing.T) {
 	var digest [32]byte
 	digest[1], digest[2] = 1, 1
@@ -167,9 +167,38 @@ func TestMotifAndMelodicAnswerKeepTheirShape(t *testing.T) {
 	}
 	character := musicalStyles["calm"]
 	chord := chordSpec{rootOffset: 5, third: 4}
-	notes, _ := melodyNotes(0, 0, 0, 23, 48, chord, motif, 0, 1, 0.7, character)
-	if len(notes) < 2 || notes[len(notes)-1].MIDI%12 != (48+5+4)%12 {
-		t.Fatalf("melodic answer missed the chord third: %+v", notes)
+	notes, _ := melodyNotes(0, 0, 0, 23, 48, chord, motif, 0, 1, 0.1, character)
+	if len(notes) != 2 || notes[1].MIDI%12 != (48+character.scale[motif[1]])%12 {
+		t.Fatalf("quiet melody lost the image-derived motif: %+v", notes)
+	}
+	answer, _ := melodyNotes(12, 3, 0, 23, 48, chord, motif, notes[1].MIDI, 1, 0.1, character)
+	if len(answer) != 1 || answer[0].MIDI%12 != (48+5+7)%12 {
+		t.Fatalf("phrase ending missed the chord fifth: %+v", answer)
+	}
+}
+
+// TestQuietMelodyChangesPitch checks that a sparse score still has distinct image-derived lead pitches rather than only chord roots.
+func TestQuietMelodyChangesPitch(t *testing.T) {
+	var firstDigest, secondDigest [32]byte
+	secondDigest[1], secondDigest[2] = 1, 1
+	first := composeMusic(analysis.StructuralAnalysis{Complexity: 0.1}, semantic.SemanticAnalysis{Description: "A serene landscape."}, firstDigest)
+	second := composeMusic(analysis.StructuralAnalysis{Complexity: 0.1}, semantic.SemanticAnalysis{Description: "A serene landscape."}, secondDigest)
+	firstLead := []int{}
+	secondLead := []int{}
+	seen := map[int]bool{}
+	for _, note := range first.Notes {
+		if note.Voice == "lead" && note.Beat < 16 {
+			firstLead = append(firstLead, note.MIDI)
+			seen[note.MIDI] = true
+		}
+	}
+	for _, note := range second.Notes {
+		if note.Voice == "lead" && note.Beat < 16 {
+			secondLead = append(secondLead, note.MIDI)
+		}
+	}
+	if len(seen) < 4 || reflect.DeepEqual(firstLead, secondLead) {
+		t.Fatalf("sparse melody repeats too few pitches or ignores the motif: %v / %v", firstLead, secondLead)
 	}
 }
 
