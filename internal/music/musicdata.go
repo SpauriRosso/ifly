@@ -18,6 +18,7 @@ type musicalCharacter struct {
 	bassBeats    []float64
 	pulseBeats   []float64
 	arpBeats     []float64
+	colorTone    int
 }
 
 type formEpisode struct {
@@ -87,11 +88,12 @@ var musicalStyles = map[string]musicalCharacter{
 		mood: "calm", mode: "pentatonic", timbre: "warm", baseTempo: 64,
 		tempoArc:     [6]int{0, 3, 6, -5, 4, -3},
 		scale:        []int{0, 2, 4, 7, 9},
-		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {0, 4}},
-		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {7, 4}, {7, 4}},
+		progression:  [4]chordSpec{{0, 4}, {9, 3}, {5, 4}, {7, 4}},
+		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {2, 3}, {7, 4}},
 		melodyRhythm: [2][]float64{{0, 1.5, 3}, {0, 2.5}},
 		bassBeats:    []float64{0},
 		arpBeats:     []float64{1, 3},
+		colorTone:    14,
 	},
 	"tense": {
 		mood: "tense", mode: "minor", timbre: "dark", baseTempo: 98,

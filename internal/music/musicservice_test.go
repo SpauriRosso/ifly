@@ -79,6 +79,24 @@ func TestPondSceneSelectsGentleCharacter(t *testing.T) {
 	}
 }
 
+// TestCalmPaletteMovesThroughRelativeMinor checks that gentle scenes use a four-chord path and sparse added ninths.
+func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
+	character := musicalStyles["calm"]
+	if character.progression[0].rootOffset != 0 || character.progression[1].rootOffset != 9 || character.progression[2].rootOffset != 5 || character.progression[3].rootOffset != 7 || character.bridge[2].rootOffset != 2 {
+		t.Fatalf("gentle harmony lacks its tonic, relative minor, subdominant, and dominant path: %+v %+v", character.progression, character.bridge)
+	}
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
+	colorNotes := 0
+	for _, note := range plan.Notes {
+		if note.Voice == "pad" && note.Beat-float64(int(note.Beat)) > 0.25 {
+			colorNotes++
+		}
+	}
+	if colorNotes < 10 {
+		t.Fatalf("gentle accompaniment lacks spaced color notes: %d", colorNotes)
+	}
+}
+
 // TestLeadAndHumResolveWithinHarmony checks that melodic anchors and vocal notes fit each bar's chord and weak dissonances resolve by step.
 func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 	for _, description := range []string{"A pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {
