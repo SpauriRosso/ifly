@@ -73,10 +73,13 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		section := bar / 4
 		chord := harmonyForBar(character, bar, section, finalBar)
 		chordRoot := root + chord.rootOffset
-		energy := sections[section].Energy
-		padLength := 3.75
+		energy := sections[section].Energy * phraseDynamics[section][bar%4]
+		padLength := padSustainBeats[bar%4]
+		if section == 3 {
+			padLength = 3.4
+		}
 		if bar == finalBar {
-			padLength = 2.3
+			padLength = 2.0
 		}
 		voicing := voiceChord(chordRoot, chord.third, previousVoicing, bar > 0)
 		previousVoicing = voicing

@@ -40,6 +40,19 @@ var phraseDegreeShifts = [6][4]int{
 	{0, -1, -2, 0},
 }
 
+// phraseDynamics shapes intensity within each four-bar phrase so each section rises and releases before the next.
+var phraseDynamics = [6][4]float64{
+	{0.82, 0.96, 1.08, 0.78},
+	{0.90, 1.04, 1.12, 0.82},
+	{0.94, 1.08, 1.16, 0.86},
+	{0.80, 0.64, 0.72, 0.58},
+	{0.90, 1.04, 1.14, 0.82},
+	{0.86, 0.72, 0.54, 0.36},
+}
+
+// padSustainBeats leaves audible space before phrase answers and cadences instead of holding every chord for the full bar.
+var padSustainBeats = [4]float64{3.4, 2.6, 3.1, 2.1}
+
 // musicalStyles keeps musical choices as data so the score generator only arranges and transforms them.
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {

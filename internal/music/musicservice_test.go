@@ -378,6 +378,29 @@ func TestPhraseRhythmDevelopsAndReturns(t *testing.T) {
 	}
 }
 
+// TestPhraseDynamicsBreathe checks that the accompaniment grows inside a phrase and releases before its cadence.
+func TestPhraseDynamicsBreathe(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	pads := map[int]MusicNote{}
+	for _, note := range plan.Notes {
+		if note.Voice == "pad" && note.Beat == float64(int(note.Beat)) {
+			bar := int(note.Beat) / 4
+			if _, exists := pads[bar]; !exists {
+				pads[bar] = note
+			}
+		}
+	}
+	if pads[2].Velocity <= pads[0].Velocity || pads[3].Velocity >= pads[2].Velocity {
+		t.Fatalf("opening phrase has no intensity arc: %+v %+v %+v", pads[0], pads[2], pads[3])
+	}
+	if pads[1].Duration >= pads[0].Duration || pads[3].Duration >= pads[2].Duration {
+		t.Fatalf("accompaniment does not leave phrase space: %+v %+v %+v %+v", pads[0], pads[1], pads[2], pads[3])
+	}
+	if pads[23].Velocity >= pads[20].Velocity {
+		t.Fatalf("ending does not fade: %+v %+v", pads[20], pads[23])
+	}
+}
+
 // TestMusicFormBreaksAndReturns checks that the interlude makes space before the returning theme regains its pulse.
 func TestMusicFormBreaksAndReturns(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A lively dancing scene."}, [32]byte{})
