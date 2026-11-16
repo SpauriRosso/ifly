@@ -21,6 +21,15 @@ performance. Listening remains the decisive check.
 - [Flute performance study](https://dael.euracoustics.org/bin/EAA/aaua_dl?document_id=52021)
   links breathing to the musical task. IFLY reserves silence between two-bar
   wind phrases rather than placing a new attack on every beat.
+- [Baroque Classical Music Generator](https://weroarforareason.itch.io/baroque)
+  is a useful piano-centered reference for distinct styles, two-hand writing,
+  score visibility, and modelled piano sound. Its page describes the product;
+  it does not publish a composition algorithm for IFLY to reproduce.
+- [Parameterized Melody Generation with Autoencoders and Temporally-Consistent Noise](https://nime.org/proceedings/2019/nime2019_paper035.pdf)
+  uses Perlin noise to vary an existing melody smoothly in a learned latent
+  space. IFLY uses a much smaller, deterministic one-dimensional gradient-noise
+  signal only for gradual phrase dynamics. It does not claim that noise alone
+  generates harmony or that this implements the paper's trained model.
 
 ## Implemented checks
 
@@ -29,6 +38,10 @@ positions use chord tones; weak inner positions may use scale tones that resolve
 by step. The cost balances motif shape, register, connected motion, and leaps.
 The audio renderer uses local flute samples with a sustained envelope, slur
 transitions, and delayed vibrato. The score and playback remain offline.
+Quiet scenes now put sampled piano in the lead, bass, and lower broken-chord
+responses. The strings sit behind the piano; tense and energetic scenes retain
+different lead instruments. Piano samples retain their natural decay rather
+than receiving an extra exponential fade or a repeated echo.
 
 Automated tests check chord resolution, melodic intervals, breath gaps, slur
 classification, score bounds, and the complete Wails build. They cannot judge
