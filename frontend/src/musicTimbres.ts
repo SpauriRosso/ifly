@@ -27,6 +27,19 @@ export interface PulseTimbre {
   cutoff: number
 }
 
+// FLUTE_EXPRESSION keeps breath, slur, and vibrato settings separate from the audio scheduling logic.
+export const FLUTE_EXPRESSION = {
+  breathGroupBeats: 8,
+  slurGapBeats: 0.12,
+  sampleSkipSeconds: 0.09,
+  attackSeconds: 0.11,
+  slurAttackSeconds: 0.045,
+  releaseSeconds: 0.16,
+  vibratoDelaySeconds: 0.35,
+  vibratoFrequencyHz: 5.2,
+  vibratoDepthCents: 5,
+} as const
+
 // TIMBRES holds sampled instruments, envelopes, and effects so score events stay separate from sound design data.
 export const TIMBRES: Record<string, TimbreProfile> = {
   warm: {

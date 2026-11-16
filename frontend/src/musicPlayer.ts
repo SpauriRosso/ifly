@@ -2,7 +2,8 @@ import type { MusicNote, MusicPlan } from '../bindings/ifly/internal/music/model
 import { nearestSample, sampleKey } from './musicInstruments'
 import { loadInstrumentSamples, type LoadedSample } from './musicSamples'
 import { createTempoMap, secondsAtBeat, type TempoMap } from './musicTiming'
-import { TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
+import { FLUTE_EXPRESSION, TIMBRES, type MusicVoice, type TimbreProfile } from './musicTimbres'
+import { findFluteSlurs } from './musicArticulation'
 
 // seededNoise takes an image seed and returns a reproducible stream of audio samples between minus one and one.
 function seededNoise(seed: string): () => number {
@@ -54,6 +55,7 @@ export class MusicPlayer {
   private loadController: AbortController | null = null
   private timer: number | null = null
   private notes: MusicNote[] = []
+  private fluteSlurs = new WeakSet<MusicNote>()
   private tempoMap: TempoMap | null = null
   private scoreStart = 0
   private scoreDuration = 0
@@ -103,6 +105,7 @@ export class MusicPlayer {
     const loadController = new AbortController()
     this.loadController = loadController
     this.notes = notes
+    this.fluteSlurs = profile.voices.lead.instrument === 'flute' ? findFluteSlurs(notes, FLUTE_EXPRESSION) : new WeakSet<MusicNote>()
     this.tempoMap = tempoMap
     this.scoreDuration = tempoMap.loopSeconds
     this.nextNote = 0
@@ -150,6 +153,7 @@ export class MusicPlayer {
     this.loadController?.abort()
     this.loadController = null
     this.notes = []
+    this.fluteSlurs = new WeakSet<MusicNote>()
     this.tempoMap = null
     if (!context) return
     if (context.state === 'running' && master) {
@@ -199,11 +203,14 @@ export class MusicPlayer {
     const envelope = context.createGain()
     const filter = context.createBiquadFilter()
     const duration = Math.max(0.1, Math.min(8, secondsAtBeat(tempoMap, note.beat + note.duration) - secondsAtBeat(tempoMap, note.beat)))
-    const attack = Math.min(timbre.attack, duration * 0.3)
-    const release = Math.min(timbre.release, duration * 0.4)
+    const fluteLead = voice === 'lead' && timbre.instrument === 'flute'
+    const slurred = fluteLead && this.fluteSlurs.has(note)
+    const attack = Math.min(fluteLead ? (slurred ? FLUTE_EXPRESSION.slurAttackSeconds : FLUTE_EXPRESSION.attackSeconds) : timbre.attack, duration * 0.3)
+    const release = Math.min(fluteLead ? FLUTE_EXPRESSION.releaseSeconds : timbre.release, duration * 0.4)
     const level = note.velocity * timbre.gain
+    const rate = 2 ** ((note.midi - anchor.midi) / 12)
     source.buffer = sample.buffer
-    source.playbackRate.setValueAtTime(2 ** ((note.midi - anchor.midi) / 12), at)
+    source.playbackRate.setValueAtTime(rate, at)
     if (sample.loopEnd > sample.loopStart) {
       source.loop = true
       source.loopStart = sample.loopStart
@@ -211,15 +218,30 @@ export class MusicPlayer {
     }
     filter.type = 'lowpass'
     filter.frequency.setValueAtTime(timbre.cutoff, at)
-    if (voice === 'lead' || voice === 'bass' || voice === 'arp') filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
+    if (!fluteLead && (voice === 'lead' || voice === 'bass' || voice === 'arp')) filter.frequency.exponentialRampToValueAtTime(Math.max(180, timbre.cutoff * 0.65), at + duration)
     envelope.gain.setValueAtTime(0, at)
-    envelope.gain.linearRampToValueAtTime(level, at + attack)
-    if (voice === 'pad' || voice === 'hum') {
+    envelope.gain.linearRampToValueAtTime(fluteLead ? level * 0.88 : level, at + attack)
+    if (fluteLead) {
+      if (at + duration * 0.5 < at + duration - release) envelope.gain.linearRampToValueAtTime(level, at + duration * 0.5)
+      envelope.gain.linearRampToValueAtTime(level * 0.9, at + duration - release)
+    } else if (voice === 'pad' || voice === 'hum') {
       envelope.gain.setValueAtTime(level, at + duration - release)
     } else {
       envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, level * 0.38), at + duration - release)
     }
     envelope.gain.linearRampToValueAtTime(0, at + duration)
+    let vibrato: OscillatorNode | null = null
+    let vibratoDepth: GainNode | null = null
+    if (fluteLead && duration > FLUTE_EXPRESSION.vibratoDelaySeconds + 0.3) {
+      vibrato = context.createOscillator()
+      vibratoDepth = context.createGain()
+      vibrato.frequency.value = FLUTE_EXPRESSION.vibratoFrequencyHz
+      vibratoDepth.gain.setValueAtTime(0, at)
+      vibratoDepth.gain.linearRampToValueAtTime(rate * (2 ** (FLUTE_EXPRESSION.vibratoDepthCents / 1200) - 1), at + FLUTE_EXPRESSION.vibratoDelaySeconds)
+      vibrato.connect(vibratoDepth).connect(source.playbackRate)
+      vibrato.start(at)
+      vibrato.stop(at + duration)
+    }
     source.connect(envelope).connect(filter)
     filter.connect(master)
     if (this.echo && (voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.echo)
@@ -228,8 +250,10 @@ export class MusicPlayer {
       source.disconnect()
       envelope.disconnect()
       filter.disconnect()
+      vibrato?.disconnect()
+      vibratoDepth?.disconnect()
     }
-    source.start(at)
+    source.start(at, slurred ? Math.min(FLUTE_EXPRESSION.sampleSkipSeconds, sample.buffer.duration * 0.15) : 0)
     source.stop(at + duration + 0.01)
   }
 
