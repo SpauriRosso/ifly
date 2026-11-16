@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { MusicPlan } from '../bindings/ifly/internal/music/models'
 import type { SemanticAnalysis } from '../bindings/ifly/internal/semantic/models'
 import type { StructuralAnalysis } from '../bindings/ifly/internal/analysis/models'
+import { Service as PresenceService } from '../bindings/ifly/internal/presence'
 import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
 import { createEdgePreview } from './edgePreview'
@@ -69,6 +70,10 @@ function App() {
   const playerRef = useRef<MusicPlayer | null>(null)
   const playerAction = useRef(false)
   const generation = useRef(0)
+
+  useEffect(() => {
+    void PresenceService.SetArtworkOpen(image !== null).catch(() => undefined)
+  }, [image])
 
   // discardMusic stops the current preview and clears the score when its source image or interpretation changes.
   function discardMusic(): void {
