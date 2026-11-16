@@ -24,11 +24,11 @@ function percent(value: number): string {
   return `${Math.round(value * 100)} %`
 }
 
-// describeMusicForm takes a generated plan and returns its phrase labels and approximate loop duration in French.
+// describeMusicForm takes a generated plan and returns its episode count and one-way performance duration in French.
 function describeMusicForm(plan: MusicPlan): string {
   const seconds = Math.round(createTempoMap(plan.sections, plan.beatsPerLoop).loopSeconds)
   const duration = seconds >= 60 ? `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, '0')} s` : `${seconds} s`
-  return `${plan.sections?.map(section => section.label).join(' → ') ?? 'Forme indisponible'} · ${duration}`
+  return `${plan.sections?.length ?? 0} phrases · ${duration}`
 }
 
 // describeTempoRange takes a score and returns the slowest and fastest phrase tempos for its inspector summary.
@@ -37,7 +37,13 @@ function describeTempoRange(plan: MusicPlan): string {
   return `${Math.min(...tempi)}–${Math.max(...tempi)} BPM`
 }
 
-// describeInstrumentPalette takes a score and returns the names of only the instruments actually present in its notes.
+// describeMainInstrument takes a score and returns the instrument carrying its melody.
+function describeMainInstrument(plan: MusicPlan): string {
+  const instrument = TIMBRES[plan.timbre]?.voices.lead.instrument
+  return instrument ? INSTRUMENT_LABELS[instrument] : 'Indisponible'
+}
+
+// describeInstrumentPalette takes a score and returns the instruments used by its accompaniment voices.
 function describeInstrumentPalette(plan: MusicPlan): string {
   const profile = TIMBRES[plan.timbre]
   if (!profile) return 'Instruments indisponibles'
@@ -45,6 +51,7 @@ function describeInstrumentPalette(plan: MusicPlan): string {
   for (const note of plan.notes ?? []) {
     const voice = note.voice as MusicVoice
     const instrument = profile.voices[voice]?.instrument
+    if (voice === 'lead') continue
     if (instrument) names.add(INSTRUMENT_LABELS[instrument])
     else if (voice === 'pulse') names.add('Percussion légère')
   }
@@ -313,7 +320,8 @@ function App() {
         {musicPlan ? <>
           <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {describeTempoRange(musicPlan)} · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
           <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
-          <p className="hint">Instruments : {describeInstrumentPalette(musicPlan)}</p>
+          <p className="semantic-description">Instrument principal : {describeMainInstrument(musicPlan)}</p>
+          <p className="hint">Accompagnements : {describeInstrumentPalette(musicPlan)}</p>
           <p className="analysis-note">Instruments choisis automatiquement pour cette image. La pièce se termine après sa conclusion.</p>
         </> : <p className="hint">La musique est préparée après l’interprétation.</p>}
         {musicError && <p className="error" role="alert">{musicError}</p>}
