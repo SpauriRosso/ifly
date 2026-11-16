@@ -296,6 +296,26 @@ func TestOpeningMelodyAvoidsOneNoteDominance(t *testing.T) {
 	}
 }
 
+// TestBridgeIntroducesSecondTheme checks that the B section has a distinct lead contour instead of repeating the opening unchanged.
+func TestBridgeIntroducesSecondTheme(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	opening := []int{}
+	bridge := []int{}
+	for _, note := range plan.Notes {
+		if note.Voice != "lead" {
+			continue
+		}
+		if note.Beat < 16 {
+			opening = append(opening, note.MIDI)
+		} else if note.Beat >= 32 && note.Beat < 48 {
+			bridge = append(bridge, note.MIDI)
+		}
+	}
+	if len(opening) < 4 || len(bridge) < 4 || reflect.DeepEqual(opening[:4], bridge[:4]) {
+		t.Fatalf("B theme repeats the first phrase: opening=%v bridge=%v", opening, bridge)
+	}
+}
+
 // TestMelodyRhythmFollowsPhraseArc checks that a detailed image grows in the bridge and thins before the final cadence.
 func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})

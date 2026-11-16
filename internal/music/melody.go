@@ -12,6 +12,16 @@ func makeMotif(digest [32]byte, scaleSize int) [4]int {
 	return [4]int{0, second, peak, second}
 }
 
+// makeBridgeMotif takes later digest bytes and the scale size, then returns a contrasting high-reaching four-note idea for the B section.
+func makeBridgeMotif(digest [32]byte, scaleSize int) [4]int {
+	start := 1 + int(digest[3])%(scaleSize-2)
+	peak := scaleSize - 1 - int(digest[4]%2)
+	if peak <= start {
+		peak = scaleSize - 1
+	}
+	return [4]int{start, peak, peak - 2, int(digest[5] % 2)}
+}
+
 // melodyRhythmForBar takes the style, visual complexity, and phrase position, then returns a safe variation of that bar's rhythm.
 func melodyRhythmForBar(bar, section int, complexity float64, character musicalCharacter) []float64 {
 	rhythm := append([]float64(nil), character.melodyRhythm[bar%2]...)
@@ -72,9 +82,6 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 		degree := motif[(bar%4+index)%len(motif)]
 		if section == 1 && index > 0 {
 			degree = (degree + 1) % len(character.scale)
-		}
-		if section == 2 {
-			degree = (len(character.scale) + 4 - degree) % len(character.scale)
 		}
 		if section == 4 && index > 0 {
 			degree = (degree + 2) % len(character.scale)
