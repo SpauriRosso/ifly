@@ -122,7 +122,12 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 		}
 		targets[index] = target
 	}
-	pitches := harmonizeMelodyTargets(targets, rhythm, previousPitch, root, chordRoot, chord.third, character.scale)
+	var pitches []int
+	if character.windLead {
+		pitches = harmonizeWindTargets(targets, rhythm, previousPitch, root, chordRoot, chord.third, character.scale)
+	} else {
+		pitches = harmonizeMelodyTargets(targets, rhythm, previousPitch, root, chordRoot, chord.third, character.scale)
+	}
 	for index, beat := range rhythm {
 		duration := 1.2
 		if index+1 < len(rhythm) {

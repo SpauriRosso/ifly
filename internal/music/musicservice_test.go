@@ -129,6 +129,33 @@ func TestFluteBreathGroups(t *testing.T) {
 	}
 }
 
+// TestFluteMelodyPrefersConnectedMotion checks that notes joined by one breath mostly move within a fourth.
+func TestFluteMelodyPrefersConnectedMotion(t *testing.T) {
+	for center := byte(0); center < 12; center++ {
+		var digest [32]byte
+		digest[0], digest[1], digest[2] = center, center%2, center%3
+		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, digest)
+		var previous *MusicNote
+		connected, largeLeaps := 0, 0
+		for index := range plan.Notes {
+			note := &plan.Notes[index]
+			if note.Voice != "lead" {
+				continue
+			}
+			if previous != nil && note.Beat-previous.Beat-previous.Duration <= 0.12 && int(note.Beat/8) == int(previous.Beat/8) {
+				connected++
+				if absInt(note.MIDI-previous.MIDI) > 5 {
+					largeLeaps++
+				}
+			}
+			previous = note
+		}
+		if connected < 30 || largeLeaps*3 > connected {
+			t.Fatalf("flute plays too many keyboard-like leaps for center %d: %d/%d", center, largeLeaps, connected)
+		}
+	}
+}
+
 // TestLeadAndHumResolveWithinHarmony checks that melodic anchors and vocal notes fit each bar's chord and weak dissonances resolve by step.
 func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 	for _, description := range []string{"A pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {

@@ -30,6 +30,16 @@ var windPhraseRhythm = [4][]float64{
 	{0},
 }
 
+// windMelodyCosts weights contour fidelity against stepwise motion and resolved passing tones in the wind-specific search.
+var windMelodyCosts = struct {
+	target   float64
+	motion   float64
+	leap     float64
+	repeated float64
+	passing  float64
+	motif    float64
+}{target: 2.0, motion: 0.65, leap: 3.0, repeated: 50.0, passing: 1.2, motif: 9.0}
+
 type formEpisode struct {
 	label      string
 	role       int
