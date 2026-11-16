@@ -79,6 +79,52 @@ func TestPondSceneSelectsGentleCharacter(t *testing.T) {
 	}
 }
 
+// TestLeadAndHumResolveWithinHarmony checks that melodic anchors and vocal notes fit each bar's chord and weak dissonances resolve by step.
+func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
+	for _, description := range []string{"A pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {
+		interpretation := semantic.SemanticAnalysis{Description: description}
+		character := selectMusicalCharacter(interpretation)
+		for center := byte(0); center < 12; center++ {
+			var digest [32]byte
+			digest[0], digest[1], digest[2] = center, center%2, center%3
+			plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.5}, interpretation, digest)
+			root := 48 + int(center)
+			for bar := 0; bar < plan.BeatsPerLoop/4; bar++ {
+				chord := harmonyForBar(character, bar, bar/4, plan.BeatsPerLoop/4-1)
+				members := chordPitchClasses(root+chord.rootOffset, chord.third)
+				lead := []MusicNote{}
+				for _, note := range plan.Notes {
+					if note.Beat < float64(bar*4) || note.Beat >= float64((bar+1)*4) {
+						continue
+					}
+					if note.Voice == "lead" {
+						lead = append(lead, note)
+					}
+					if note.Voice == "hum" && !pitchBelongsToChord(note.MIDI, members) {
+						t.Fatalf("unresolved hum in %q, bar %d: %+v", description, bar, note)
+					}
+				}
+				for index, note := range lead {
+					if pitchBelongsToChord(note.MIDI, members) {
+						continue
+					}
+					if index == 0 || index+1 == len(lead) || absInt(note.MIDI-lead[index+1].MIDI) > 2 {
+						t.Fatalf("unresolved lead in %q, center %d, bar %d: %+v", description, center, bar, lead)
+					}
+				}
+			}
+		}
+	}
+}
+
+// absInt takes an integer and returns its nonnegative magnitude for interval checks.
+func absInt(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
+}
+
 // TestComposeMusicUsesVisualComplexity checks that added visual detail changes melodic density for the same interpreted scene.
 func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 	interpretation := semantic.SemanticAnalysis{Description: "A serene landscape."}
@@ -239,8 +285,8 @@ func TestMotifAndMelodicAnswerKeepTheirShape(t *testing.T) {
 	character := musicalStyles["calm"]
 	chord := chordSpec{rootOffset: 5, third: 4}
 	notes, _ := melodyNotes(0, 0, 0, 23, 48, chord, motif, 0, 1, 0.1, character)
-	if len(notes) != 2 || notes[1].MIDI%12 != (48+character.scale[motif[1]])%12 {
-		t.Fatalf("quiet melody lost the image-derived motif: %+v", notes)
+	if len(notes) != 2 || !pitchBelongsToChord(notes[1].MIDI, chordPitchClasses(53, 4)) {
+		t.Fatalf("quiet melody does not settle into its chord: %+v", notes)
 	}
 	answer, _ := melodyNotes(12, 3, 0, 23, 48, chord, motif, notes[1].MIDI, 1, 0.1, character)
 	if len(answer) != 1 || answer[0].MIDI%12 != (48+5+7)%12 {

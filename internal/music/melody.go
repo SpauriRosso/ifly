@@ -47,32 +47,6 @@ func melodyRhythmForBar(bar, section int, complexity float64, character musicalC
 	return rhythm
 }
 
-// nearestMelodyRegister takes a pitch and prior lead note, then returns a nearby upper-register octave distinct from the accompaniment.
-func nearestMelodyRegister(pitch, previous int) int {
-	if previous == 0 {
-		previous = 76
-	}
-	best := 0
-	bestDistance := math.MaxInt
-	for octave := -24; octave <= 24; octave += 12 {
-		candidate := pitch + octave
-		if candidate < 67 || candidate > 88 {
-			continue
-		}
-		distance := candidate - previous
-		if distance < 0 {
-			distance = -distance
-		}
-		if distance < bestDistance {
-			best, bestDistance = candidate, distance
-		}
-	}
-	if best == 0 {
-		return pitch
-	}
-	return best
-}
-
 // melodyDegree takes a motif and phrase position, then returns a scale degree after the section's contour transformation.
 func melodyDegree(motif [4]int, bar, section, noteIndex, scaleSize int) int {
 	position := bar % 4
@@ -94,33 +68,29 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 	rhythm := melodyRhythmForBar(bar, section, complexity, character)
 	notes := make([]MusicNote, 0, len(rhythm))
 	chordRoot := root + chord.rootOffset
-	for index, beat := range rhythm {
+	targets := make([]int, len(rhythm))
+	for index := range rhythm {
 		degree := melodyDegree(motif, bar, section, index, len(character.scale))
-		pitch := root + 24 + character.scale[degree]
+		target := root + 24 + character.scale[degree]
 		if index == 0 && bar%2 == 0 {
-			pitch = chordRoot + 24
+			target = chordRoot + 24
 			if bar%4 == 2 {
-				pitch += chord.third
+				target += chord.third
 			}
 		} else if index == len(rhythm)-1 && (bar%4 == 3 || section == 5) {
 			interval := chord.third
 			if bar%2 == 1 {
 				interval = 7
 			}
-			pitch = chordRoot + 24 + interval
+			target = chordRoot + 24 + interval
 		}
 		if bar == finalBar {
-			pitch = root + 24
+			target = root + 24
 		}
-		pitch = nearestMelodyRegister(pitch, previousPitch)
-		if pitch == previousPitch && bar != finalBar {
-			if index == 0 {
-				pitch = nearestMelodyRegister(chordRoot+24+chord.third, previousPitch)
-			} else {
-				pitch = nearestMelodyRegister(root+24+character.scale[(degree+1)%len(character.scale)], previousPitch)
-			}
-		}
-		previousPitch = pitch
+		targets[index] = target
+	}
+	pitches := harmonizeMelodyTargets(targets, rhythm, previousPitch, root, chordRoot, chord.third, character.scale)
+	for index, beat := range rhythm {
 		duration := 1.2
 		if index+1 < len(rhythm) {
 			duration = math.Min(1.5, rhythm[index+1]-beat-0.12)
@@ -135,7 +105,10 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 		} else if index == len(rhythm)-1 {
 			velocity *= 0.82
 		}
-		notes = append(notes, MusicNote{Beat: start + beat, Duration: duration, MIDI: pitch, Velocity: velocity, Voice: "lead"})
+		notes = append(notes, MusicNote{Beat: start + beat, Duration: duration, MIDI: pitches[index], Velocity: velocity, Voice: "lead"})
+	}
+	if len(pitches) > 0 {
+		previousPitch = pitches[len(pitches)-1]
 	}
 	return notes, previousPitch
 }

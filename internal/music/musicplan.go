@@ -104,7 +104,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		notes = append(notes, lead...)
 		previousLeadPitch = finalPitch
 		if useHum {
-			notes = append(notes, hummingNotes(start, section, bar, root, character.scale, energy)...)
+			notes = append(notes, hummingNotes(start, section, bar, chordRoot, chord.third, energy)...)
 		}
 	}
 	expressNotes(notes, digest, float64(finalBar*4))

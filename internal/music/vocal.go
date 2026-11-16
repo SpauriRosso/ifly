@@ -28,14 +28,14 @@ func shouldHum(structure analysis.StructuralAnalysis, interpretation semantic.Se
 	return false
 }
 
-// hummingNotes takes an interlude bar and tonal center, then returns one long tonic or third response on alternating bars.
-func hummingNotes(start float64, section, bar, root int, scale []int, energy float64) []MusicNote {
+// hummingNotes takes an interlude bar and its chord, then returns a sparse hum on a stable chord tone.
+func hummingNotes(start float64, section, bar, chordRoot, chordThird int, energy float64) []MusicNote {
 	if section != 3 || bar%4 == 1 || bar%4 == 3 {
 		return nil
 	}
-	degree := 0
+	interval := 0
 	if bar%4 == 2 {
-		degree = 2
+		interval = chordThird
 	}
-	return []MusicNote{{Beat: start, Duration: 3.2, MIDI: root + 12 + scale[degree], Velocity: 0.55 * energy, Voice: "hum"}}
+	return []MusicNote{{Beat: start, Duration: 3.2, MIDI: chordRoot + 12 + interval, Velocity: 0.55 * energy, Voice: "hum"}}
 }
