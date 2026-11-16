@@ -272,6 +272,30 @@ func TestLeadHasIndependentRegisterAndPhraseVariety(t *testing.T) {
 	}
 }
 
+// TestOpeningMelodyAvoidsOneNoteDominance checks the quietest supported scene across tonal centers and motif variants.
+func TestOpeningMelodyAvoidsOneNoteDominance(t *testing.T) {
+	for center := byte(0); center < 12; center++ {
+		for variant := byte(0); variant < 4; variant++ {
+			var digest [32]byte
+			digest[0], digest[1], digest[2] = center, variant&1, variant>>1
+			plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.1}, semantic.SemanticAnalysis{Description: "A serene landscape."}, digest)
+			counts := map[int]int{}
+			total := 0
+			for _, note := range plan.Notes {
+				if note.Voice == "lead" && note.Beat < 16 {
+					counts[note.MIDI]++
+					total++
+				}
+			}
+			for pitch, count := range counts {
+				if count*2 >= total {
+					t.Fatalf("one pitch dominates the opening: center=%d variant=%d pitch=%d count=%d/%d", center, variant, pitch, count, total)
+				}
+			}
+		}
+	}
+}
+
 // TestMelodyRhythmFollowsPhraseArc checks that a detailed image grows in the bridge and thins before the final cadence.
 func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
