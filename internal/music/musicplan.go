@@ -74,7 +74,7 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		section := episode.role
 		chord := harmonyForBar(character, bar, section, finalBar)
 		chordRoot := root + chord.rootOffset
-		energy := sections[episodeIndex].Energy * phraseDynamics[section][bar%4]
+		energy := phraseEnergy(sections[episodeIndex].Energy*phraseDynamics[section][bar%4], bar, digest)
 		padLength := padSustainBeats[bar%4]
 		if section == 3 {
 			padLength = 3.4

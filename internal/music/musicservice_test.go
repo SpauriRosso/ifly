@@ -186,6 +186,28 @@ func TestPianoLeadsQuietScenes(t *testing.T) {
 	}
 }
 
+// TestPhraseEnergyMovesSmoothly checks that image-dependent dynamics vary across a score without note-to-note random jumps.
+func TestPhraseEnergyMovesSmoothly(t *testing.T) {
+	var digest [32]byte
+	for index := range digest {
+		digest[index] = byte(index*19 + 7)
+	}
+	minimum, maximum := 2.0, 0.0
+	previous := phraseEnergy(1, 0, digest)
+	for bar := 0; bar < 64; bar++ {
+		current := phraseEnergy(1, bar, digest)
+		minimum = math.Min(minimum, current)
+		maximum = math.Max(maximum, current)
+		if math.Abs(current-previous) > 0.12 {
+			t.Fatalf("adjacent piano dynamics jump at bar %d: %.3f to %.3f", bar, previous, current)
+		}
+		previous = current
+	}
+	if maximum-minimum < 0.06 {
+		t.Fatalf("image-driven dynamics do not form a useful repeatable arc: %.3f to %.3f", minimum, maximum)
+	}
+}
+
 // TestLeadAndHumResolveWithinHarmony checks that melodic anchors and vocal notes fit each bar's chord and weak dissonances resolve by step.
 func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 	for _, description := range []string{"A pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {
