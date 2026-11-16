@@ -32,6 +32,10 @@ type activityRequest struct {
 		Activity struct {
 			Type    int    `json:"type"`
 			Details string `json:"details"`
+			Assets  struct {
+				LargeImage string `json:"large_image"`
+				LargeText  string `json:"large_text"`
+			} `json:"assets"`
 		} `json:"activity"`
 	} `json:"args"`
 	Nonce string `json:"nonce"`
@@ -133,6 +137,8 @@ func setActivity(writer *rpcWriter, artworkOpen bool) error {
 	request.Args.PID = os.Getpid()
 	request.Args.Activity.Type = 0
 	request.Args.Activity.Details = activityDetails(artworkOpen)
+	request.Args.Activity.Assets.LargeImage = "ifly"
+	request.Args.Activity.Assets.LargeText = "IFLY"
 	return writer.write(1, request)
 }
 

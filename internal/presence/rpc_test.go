@@ -42,7 +42,7 @@ func TestDiscordSessionPublishesArtworkState(t *testing.T) {
 			t.Fatalf("missing activity update: opcode=%d error=%v", opcode, err)
 		}
 		var request activityRequest
-		if err := json.Unmarshal(payload, &request); err != nil || request.Command != "SET_ACTIVITY" || request.Args.PID <= 0 || request.Args.Activity.Type != 0 || request.Args.Activity.Details != expected {
+		if err := json.Unmarshal(payload, &request); err != nil || request.Command != "SET_ACTIVITY" || request.Args.PID <= 0 || request.Args.Activity.Type != 0 || request.Args.Activity.Details != expected || request.Args.Activity.Assets.LargeImage != "ifly" || request.Args.Activity.Assets.LargeText != "IFLY" {
 			t.Fatalf("wrong activity for %q: %+v error=%v", expected, request, err)
 		}
 	}
