@@ -45,9 +45,9 @@ export const TIMBRES: Record<string, TimbreProfile> = {
   warm: {
     voices: {
       pad: { instrument: 'violin', gain: 0.22, attack: 0.12, release: 0.45, cutoff: 5200 },
-      bass: { instrument: 'bass', gain: 0.48, attack: 0.012, release: 0.28, cutoff: 1800 },
-      lead: { instrument: 'flute', gain: 0.84, attack: 0.035, release: 0.24, cutoff: 5800 },
-      arp: { instrument: 'guitar', gain: 0.25, attack: 0.008, release: 0.18, cutoff: 5600 },
+      bass: { instrument: 'piano', gain: 0.34, attack: 0.008, release: 0.24, cutoff: 3400 },
+      lead: { instrument: 'piano', gain: 0.9, attack: 0.008, release: 0.3, cutoff: 6500 },
+      arp: { instrument: 'piano', gain: 0.22, attack: 0.008, release: 0.2, cutoff: 4900 },
       hum: { instrument: 'voice', gain: 0.32, attack: 0.12, release: 0.42, cutoff: 4200 },
       pulse: { gain: 0.2, attack: 0.003, cutoff: 2200 },
     },
@@ -77,10 +77,10 @@ export const TIMBRES: Record<string, TimbreProfile> = {
   },
   soft: {
     voices: {
-      pad: { instrument: 'piano', gain: 0.21, attack: 0.025, release: 0.5, cutoff: 4800 },
-      bass: { instrument: 'bass', gain: 0.45, attack: 0.01, release: 0.26, cutoff: 1600 },
-      lead: { instrument: 'flute', gain: 0.82, attack: 0.04, release: 0.23, cutoff: 4800 },
-      arp: { instrument: 'guitar', gain: 0.23, attack: 0.008, release: 0.17, cutoff: 5000 },
+      pad: { instrument: 'cello', gain: 0.18, attack: 0.13, release: 0.5, cutoff: 4000 },
+      bass: { instrument: 'piano', gain: 0.31, attack: 0.008, release: 0.24, cutoff: 3000 },
+      lead: { instrument: 'piano', gain: 0.88, attack: 0.008, release: 0.3, cutoff: 5900 },
+      arp: { instrument: 'piano', gain: 0.2, attack: 0.008, release: 0.18, cutoff: 4400 },
       hum: { instrument: 'voice', gain: 0.30, attack: 0.13, release: 0.45, cutoff: 4000 },
       pulse: { gain: 0.17, attack: 0.003, cutoff: 2000 },
     },

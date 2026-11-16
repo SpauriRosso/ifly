@@ -98,15 +98,22 @@ func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
 	}
 }
 
-// TestFluteBreathGroups checks that a wind melody connects within two-bar gestures and leaves air before the next gesture.
+// TestFluteBreathGroups checks that the optional wind melody connects within two-bar gestures and leaves air before the next gesture.
 func TestFluteBreathGroups(t *testing.T) {
-	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
+	character := musicalStyles["calm"]
+	character.windLead = true
+	motif := makeMotif([32]byte{}, len(character.scale))
+	lead := []MusicNote{}
+	previous := 0
+	for bar := 0; bar < 5; bar++ {
+		chord := harmonyForBar(character, bar, 0, 63)
+		barNotes, finalPitch := melodyNotes(float64(bar*4), bar, 0, 63, 48, chord, motif, previous, 1, 0.7, character)
+		lead = append(lead, barNotes...)
+		previous = finalPitch
+	}
 	lastInBar := [4]MusicNote{}
 	firstInBar := [5]MusicNote{}
-	for _, note := range plan.Notes {
-		if note.Voice != "lead" || note.Beat >= 20 {
-			continue
-		}
+	for _, note := range lead {
 		bar := int(note.Beat / 4)
 		if firstInBar[bar].Duration == 0 {
 			firstInBar[bar] = note
@@ -129,19 +136,27 @@ func TestFluteBreathGroups(t *testing.T) {
 	}
 }
 
-// TestFluteMelodyPrefersConnectedMotion checks that notes joined by one breath mostly move within a fourth.
+// TestFluteMelodyPrefersConnectedMotion checks that optional wind notes joined by one breath mostly move within a fourth.
 func TestFluteMelodyPrefersConnectedMotion(t *testing.T) {
+	character := musicalStyles["calm"]
+	character.windLead = true
 	for center := byte(0); center < 12; center++ {
 		var digest [32]byte
 		digest[0], digest[1], digest[2] = center, center%2, center%3
-		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, digest)
+		motif := makeMotif(digest, len(character.scale))
+		lead := []MusicNote{}
+		previousPitch := 0
+		for bar := 0; bar < 64; bar++ {
+			section := formEpisodes[bar/4].role
+			chord := harmonyForBar(character, bar, section, 63)
+			barNotes, finalPitch := melodyNotes(float64(bar*4), bar, section, 63, 48+int(center), chord, motif, previousPitch, 1, 0.7, character)
+			lead = append(lead, barNotes...)
+			previousPitch = finalPitch
+		}
 		var previous *MusicNote
 		connected, largeLeaps := 0, 0
-		for index := range plan.Notes {
-			note := &plan.Notes[index]
-			if note.Voice != "lead" {
-				continue
-			}
+		for index := range lead {
+			note := &lead[index]
 			if previous != nil && note.Beat-previous.Beat-previous.Duration <= 0.12 && int(note.Beat/8) == int(previous.Beat/8) {
 				connected++
 				if absInt(note.MIDI-previous.MIDI) > 5 {
@@ -152,6 +167,21 @@ func TestFluteMelodyPrefersConnectedMotion(t *testing.T) {
 		}
 		if connected < 30 || largeLeaps*3 > connected {
 			t.Fatalf("flute plays too many keyboard-like leaps for center %d: %d/%d", center, largeLeaps, connected)
+		}
+	}
+}
+
+// TestPianoLeadsQuietScenes checks that calm and unclassified images use piano phrasing while other moods retain contrasting leads.
+func TestPianoLeadsQuietScenes(t *testing.T) {
+	for _, name := range []string{"calm", "neutral"} {
+		character := musicalStyles[name]
+		if !character.pianoLead || character.windLead {
+			t.Fatalf("%s still uses wind phrasing instead of piano phrasing", name)
+		}
+	}
+	for _, name := range []string{"tense", "energetic"} {
+		if musicalStyles[name].pianoLead {
+			t.Fatalf("%s unexpectedly uses the quiet piano lead", name)
 		}
 	}
 }

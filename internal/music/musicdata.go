@@ -16,6 +16,7 @@ type musicalCharacter struct {
 	bridge       [4]chordSpec
 	melodyRhythm [2][]float64
 	windLead     bool
+	pianoLead    bool
 	bassBeats    []float64
 	pulseBeats   []float64
 	arpBeats     []float64
@@ -105,7 +106,7 @@ var padSustainBeats = [4]float64{3.4, 2.6, 3.1, 2.1}
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {
 		mood: "calm", mode: "pentatonic", timbre: "warm", baseTempo: 64,
-		windLead:     true,
+		pianoLead:    true,
 		tempoArc:     [6]int{0, 3, 6, -5, 4, -3},
 		scale:        []int{0, 2, 4, 7, 9},
 		progression:  [4]chordSpec{{0, 4}, {9, 3}, {5, 4}, {7, 4}},
@@ -137,7 +138,7 @@ var musicalStyles = map[string]musicalCharacter{
 	},
 	"neutral": {
 		mood: "neutral", mode: "dorian", timbre: "soft", baseTempo: 78,
-		windLead:     true,
+		pianoLead:    true,
 		tempoArc:     [6]int{0, 3, 7, -5, 5, -3},
 		scale:        []int{0, 2, 3, 5, 7, 9, 10},
 		progression:  [4]chordSpec{{0, 3}, {5, 4}, {10, 4}, {0, 3}},
