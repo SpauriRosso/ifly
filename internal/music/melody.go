@@ -37,16 +37,16 @@ func melodyRhythmForBar(bar, section int, complexity float64, character musicalC
 	return rhythm
 }
 
-// nearestMelodyRegister takes a pitch class in a chosen octave and the previous note, then returns its closest playable octave.
+// nearestMelodyRegister takes a pitch and prior lead note, then returns a nearby upper-register octave distinct from the accompaniment.
 func nearestMelodyRegister(pitch, previous int) int {
 	if previous == 0 {
-		return pitch
+		previous = 76
 	}
-	best := pitch
+	best := 0
 	bestDistance := math.MaxInt
-	for octave := -12; octave <= 12; octave += 12 {
+	for octave := -24; octave <= 24; octave += 12 {
 		candidate := pitch + octave
-		if candidate < 55 || candidate > 84 {
+		if candidate < 67 || candidate > 88 {
 			continue
 		}
 		distance := candidate - previous
@@ -57,6 +57,9 @@ func nearestMelodyRegister(pitch, previous int) int {
 			best, bestDistance = candidate, distance
 		}
 	}
+	if best == 0 {
+		return pitch
+	}
 	return best
 }
 
@@ -66,7 +69,7 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 	notes := make([]MusicNote, 0, len(rhythm))
 	chordRoot := root + chord.rootOffset
 	for index, beat := range rhythm {
-		degree := motif[(bar%2*2+index)%len(motif)]
+		degree := motif[(bar%4+index)%len(motif)]
 		if section == 1 && index > 0 {
 			degree = (degree + 1) % len(character.scale)
 		}
@@ -79,25 +82,25 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 		if section == 5 && index > 0 {
 			degree = (degree + len(character.scale) - 1) % len(character.scale)
 		}
-		pitch := root + 12 + character.scale[degree]
+		pitch := root + 24 + character.scale[degree]
 		if index == 0 && bar%2 == 0 {
-			pitch = chordRoot + 12
+			pitch = chordRoot + 24
 		} else if index == len(rhythm)-1 && (bar%4 == 3 || section == 5) {
 			interval := chord.third
 			if bar%2 == 1 {
 				interval = 7
 			}
-			pitch = chordRoot + 12 + interval
+			pitch = chordRoot + 24 + interval
 		}
 		if bar == finalBar {
-			pitch = root + 12
+			pitch = root + 24
 		}
 		pitch = nearestMelodyRegister(pitch, previousPitch)
 		if pitch == previousPitch && bar != finalBar {
 			if index == 0 {
-				pitch = nearestMelodyRegister(chordRoot+12+chord.third, previousPitch)
+				pitch = nearestMelodyRegister(chordRoot+24+chord.third, previousPitch)
 			} else {
-				pitch = nearestMelodyRegister(root+12+character.scale[(degree+1)%len(character.scale)], previousPitch)
+				pitch = nearestMelodyRegister(root+24+character.scale[(degree+1)%len(character.scale)], previousPitch)
 			}
 		}
 		previousPitch = pitch

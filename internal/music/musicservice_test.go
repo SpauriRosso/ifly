@@ -202,6 +202,33 @@ func TestQuietMelodyChangesPitch(t *testing.T) {
 	}
 }
 
+// TestLeadHasIndependentRegisterAndPhraseVariety checks that calm and energetic scenes produce clearly moving lead lines above the accompaniment.
+func TestLeadHasIndependentRegisterAndPhraseVariety(t *testing.T) {
+	for _, scene := range []string{"A serene landscape.", "A lively dancing scene."} {
+		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.2}, semantic.SemanticAnalysis{Description: scene}, [32]byte{})
+		opening := map[int]bool{}
+		previous := -1
+		for _, note := range plan.Notes {
+			if note.Voice != "lead" {
+				continue
+			}
+			if note.MIDI < 67 || note.MIDI > 88 {
+				t.Fatalf("lead left its own register for %q: %d", scene, note.MIDI)
+			}
+			if note.Beat < 16 {
+				opening[note.MIDI] = true
+			}
+			if note.MIDI == previous && note.Beat < 92 {
+				t.Fatalf("lead repeated one pitch without a melodic step for %q", scene)
+			}
+			previous = note.MIDI
+		}
+		if len(opening) < 4 {
+			t.Fatalf("opening phrase lacks pitch variety for %q: %v", scene, opening)
+		}
+	}
+}
+
 // TestMelodyRhythmFollowsPhraseArc checks that a detailed image grows in the bridge and thins before the final cadence.
 func TestMelodyRhythmFollowsPhraseArc(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
