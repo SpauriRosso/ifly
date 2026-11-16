@@ -19,7 +19,11 @@ var assets embed.FS
 
 // main starts the IFLY desktop window, binds its services, and closes Discord presence on exit.
 func main() {
-	presenceService := presence.NewService(os.Getenv("IFLY_DISCORD_APP_ID"))
+	appID := os.Getenv("IFLY_DISCORD_APP_ID")
+	if appID == "" {
+		appID = presence.DefaultApplicationID
+	}
+	presenceService := presence.NewService(appID)
 	defer presenceService.Close()
 	app := application.New(application.Options{
 		Name:        "IFLY",

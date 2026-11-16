@@ -1,5 +1,8 @@
 package presence
 
+// DefaultApplicationID identifies IFLY's public Discord application when no override is configured.
+const DefaultApplicationID = "707372989921886250"
+
 const (
 	drawingDetails  = "Drawing a piece of art"
 	admiringDetails = "Admiring a piece of art"
