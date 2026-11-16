@@ -224,7 +224,7 @@ export class MusicPlayer {
     if (fluteLead) {
       if (at + duration * 0.5 < at + duration - release) envelope.gain.linearRampToValueAtTime(level, at + duration * 0.5)
       envelope.gain.linearRampToValueAtTime(level * 0.9, at + duration - release)
-    } else if (voice === 'pad' || voice === 'hum') {
+    } else if (timbre.instrument === 'piano' || voice === 'pad' || voice === 'hum') {
       envelope.gain.setValueAtTime(level, at + duration - release)
     } else {
       envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, level * 0.38), at + duration - release)
@@ -244,7 +244,7 @@ export class MusicPlayer {
     }
     source.connect(envelope).connect(filter)
     filter.connect(master)
-    if (this.echo && (voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.echo)
+    if (this.echo && timbre.instrument !== 'piano' && (voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.echo)
     if (this.room && (voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.room)
     source.onended = () => {
       source.disconnect()
