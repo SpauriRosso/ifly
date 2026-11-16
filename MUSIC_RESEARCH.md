@@ -12,19 +12,18 @@ performance. Listening remains the decisive check.
   IFLY likewise plans a long form before assigning bar harmony and note events.
 - [AccoMontage2 (ISMIR 2022)](https://archives.ismir.net/ismir2022/paper/000029.pdf)
   evaluates accompaniment against a lead melody at note, phrase, and piece levels.
-  IFLY places accompaniment after its lead and leaves lead attacks unobscured.
+  IFLY plans harmony and melody before writing the lower piano part.
   This is a limited rule-based adaptation, not a reproduction of that system.
-- [PULSE-IT (ISMIR 2025)](https://ismir2025program.ismir.net/lbd_403.html)
-  treats wind articulation, including slurs and vibrato, as essential to expressive
-  synthesis. IFLY now separates flute breath groups, sustains notes through slurs,
-  and delays vibrato on longer notes.
-- [Flute performance study](https://dael.euracoustics.org/bin/EAA/aaua_dl?document_id=52021)
-  links breathing to the musical task. IFLY reserves silence between two-bar
-  wind phrases rather than placing a new attack on every beat.
 - [Baroque Classical Music Generator](https://weroarforareason.itch.io/baroque)
   is a useful piano-centered reference for distinct styles, two-hand writing,
   score visibility, and modelled piano sound. Its page describes the product;
   it does not publish a composition algorithm for IFLY to reproduce.
+- [Salamander Grand Piano V3](https://github.com/sfzinstruments/SalamanderGrandPiano)
+  documents a multi-layer grand-piano recording. IFLY now bundles a compact
+  19-anchor MP3 subset for offline playback, with its license in
+  `frontend/public/samples/ATTRIBUTION.md`. This subset has fewer velocity
+  layers and no sampled pedal or release noises, so its sound is less detailed
+  than the original SFZ instrument or Baroque's advertised modelled piano.
 - [Parameterized Melody Generation with Autoencoders and Temporally-Consistent Noise](https://nime.org/proceedings/2019/nime2019_paper035.pdf)
   uses Perlin noise to vary an existing melody smoothly in a learned latent
   space. IFLY uses a much smaller, deterministic one-dimensional gradient-noise
@@ -33,19 +32,18 @@ performance. Listening remains the decisive check.
 
 ## Implemented checks
 
-The wind melody searches candidate pitches by dynamic programming. Strong
-positions use chord tones; weak inner positions may use scale tones that resolve
-by step. The cost balances motif shape, register, connected motion, and leaps.
-The audio renderer uses local flute samples with a sustained envelope, slur
-transitions, and delayed vibrato. The score and playback remain offline.
-Quiet scenes now put sampled piano in the lead, bass, and lower broken-chord
-responses. The strings sit behind the piano; tense and energetic scenes retain
-different lead instruments. Piano samples retain their natural decay rather
-than receiving an extra exponential fade or a repeated echo.
+Every active scene now produces solo piano. The image controls its mood, tempo,
+key, and motifs. The score uses a chord plan, a right-hand melody with occasional
+consonant dyads, a low bass line, and a more continuous broken-chord left hand.
+The left-hand figure changes with the scene and becomes sparse in reflective
+sections. Secondary dominants and dominant sevenths prepare selected cadences.
+The player leaves a short release tail on piano notes and uses room ambience
+without a repeated echo. Score generation and playback remain offline.
 
-Automated tests check chord resolution, melodic intervals, breath gaps, slur
-classification, score bounds, and the complete Wails build. They cannot judge
-whether the result feels poetic or whether a particular flute sample sounds
-convincing. The next evaluation should compare recordings of at least a quiet
-landscape, an abstract image, and a tense scene, focusing on melodic contour,
-harmonic direction, instrumental balance, and the audible joins between notes.
+Automated tests check chord resolution, melodic intervals, hand separation,
+cadences, bundled sample coverage, and the player's event limit. They cannot
+judge whether a piece resembles a convincing Mozart, Chopin, or Beethoven
+idiom. Those names remain artistic references, not labels for validated style
+models. The next evaluation should compare recordings of a quiet landscape,
+an abstract image, and a tense scene, focusing on melodic contour, harmonic
+direction, left-hand writing, dynamics, and the audible joins between notes.
