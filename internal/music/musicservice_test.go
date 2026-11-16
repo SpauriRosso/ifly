@@ -402,6 +402,22 @@ func TestPianoRightHandDyads(t *testing.T) {
 	}
 }
 
+// TestPianoScoreFitsPlayer checks dense two-hand scores against the desktop player's bounded event budget across scenes.
+func TestPianoScoreFitsPlayer(t *testing.T) {
+	for _, scene := range []string{"A serene pond.", "A threatening storm.", "A lively dancing scene.", "A simple sketch."} {
+		for _, complexity := range []float64{0.1, 0.8} {
+			for center := byte(0); center < 12; center++ {
+				var digest [32]byte
+				digest[0] = center
+				plan := composeMusic(analysis.StructuralAnalysis{Complexity: complexity}, semantic.SemanticAnalysis{Description: scene}, digest)
+				if len(plan.Notes) > 1200 {
+					t.Fatalf("piano score exceeds player limit for %q complexity %.1f center %d: %d events", scene, complexity, center, len(plan.Notes))
+				}
+			}
+		}
+	}
+}
+
 // TestCounterlineAnswersLead checks that aligned piano-hand attacks stay in separate registers.
 func TestCounterlineAnswersLead(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
