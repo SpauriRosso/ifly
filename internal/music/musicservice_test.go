@@ -98,6 +98,37 @@ func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
 	}
 }
 
+// TestFluteBreathGroups checks that a wind melody connects within two-bar gestures and leaves air before the next gesture.
+func TestFluteBreathGroups(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
+	lastInBar := [4]MusicNote{}
+	firstInBar := [5]MusicNote{}
+	for _, note := range plan.Notes {
+		if note.Voice != "lead" || note.Beat >= 20 {
+			continue
+		}
+		bar := int(note.Beat / 4)
+		if firstInBar[bar].Duration == 0 {
+			firstInBar[bar] = note
+		}
+		if bar < 4 {
+			lastInBar[bar] = note
+		}
+	}
+	for _, bar := range []int{0, 2} {
+		gap := firstInBar[bar+1].Beat - (lastInBar[bar].Beat + lastInBar[bar].Duration)
+		if gap < -0.15 || gap > 0.15 {
+			t.Fatalf("flute phrase does not slur across bar %d: %.2f beats", bar, gap)
+		}
+	}
+	for _, bar := range []int{1, 3} {
+		gap := firstInBar[bar+1].Beat - (lastInBar[bar].Beat + lastInBar[bar].Duration)
+		if gap < 0.5 {
+			t.Fatalf("flute has no breath after bar %d: %.2f beats", bar, gap)
+		}
+	}
+}
+
 // TestLeadAndHumResolveWithinHarmony checks that melodic anchors and vocal notes fit each bar's chord and weak dissonances resolve by step.
 func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 	for _, description := range []string{"A pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {

@@ -34,6 +34,9 @@ func turnMotif(motif [4]int, turn int) [4]int {
 // melodyRhythmForBar takes the style, visual complexity, and phrase position, then returns a safe variation of that bar's rhythm.
 func melodyRhythmForBar(bar, section int, complexity float64, character musicalCharacter) []float64 {
 	rhythm := append([]float64(nil), character.melodyRhythm[bar%2]...)
+	if character.windLead {
+		rhythm = append([]float64(nil), windPhraseRhythm[bar%4]...)
+	}
 	if complexity < 0.28 && (character.mood == "calm" || character.mood == "neutral") && len(rhythm) > 2 {
 		rhythm = rhythm[:2]
 	}
@@ -54,6 +57,27 @@ func melodyRhythmForBar(bar, section int, complexity float64, character musicalC
 		rhythm = append(rhythm[:1], append([]float64{passingBeat}, rhythm[1:]...)...)
 	}
 	return rhythm
+}
+
+// windNoteDuration takes the note's place in a flute phrase and returns a slurred sustain or a shortened note before a breath.
+func windNoteDuration(rhythm []float64, index, bar, finalBar, section int) float64 {
+	beat := rhythm[index]
+	if index+1 < len(rhythm) {
+		return rhythm[index+1] - beat + 0.06
+	}
+	if bar == finalBar {
+		return 2.1
+	}
+	if section == 3 {
+		return math.Max(0.7, 3.1-beat)
+	}
+	if bar%4 == 3 {
+		return math.Max(0.7, 2.65-beat)
+	}
+	if bar%2 == 1 {
+		return math.Max(0.6, 3.1-beat)
+	}
+	return 4.06 - beat
 }
 
 // melodyDegree takes a motif and phrase position, then returns a scale degree after the section's contour transformation.
@@ -107,6 +131,9 @@ func melodyNotes(start float64, bar, section, finalBar, root int, chord chordSpe
 			duration = 1.6
 		} else if bar%4 == 3 {
 			duration = 2.2
+		}
+		if character.windLead {
+			duration = windNoteDuration(rhythm, index, bar, finalBar, section)
 		}
 		velocity := 0.57 * energy
 		if index == 0 {
