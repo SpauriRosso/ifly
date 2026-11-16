@@ -171,17 +171,12 @@ func TestFluteMelodyPrefersConnectedMotion(t *testing.T) {
 	}
 }
 
-// TestPianoLeadsQuietScenes checks that calm and unclassified images use piano phrasing while other moods retain contrasting leads.
-func TestPianoLeadsQuietScenes(t *testing.T) {
-	for _, name := range []string{"calm", "neutral"} {
+// TestAllScenesUsePianoLead checks that every scene uses piano phrasing while keeping its own tonal and rhythmic data.
+func TestAllScenesUsePianoLead(t *testing.T) {
+	for _, name := range []string{"calm", "neutral", "tense", "energetic"} {
 		character := musicalStyles[name]
 		if !character.pianoLead || character.windLead {
 			t.Fatalf("%s still uses wind phrasing instead of piano phrasing", name)
-		}
-	}
-	for _, name := range []string{"tense", "energetic"} {
-		if musicalStyles[name].pianoLead {
-			t.Fatalf("%s unexpectedly uses the quiet piano lead", name)
 		}
 	}
 }
@@ -651,7 +646,7 @@ func TestMusicFormBreaksAndReturns(t *testing.T) {
 	if plan.Sections[3].Label != "Interlude" || plan.Sections[4].Label != "Retour" {
 		t.Fatalf("missing form contrast: %+v", plan.Sections)
 	}
-	if countVoiceInSection(plan, "pulse", 48, 64) != 0 || countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 64, 80) || countVoiceInSection(plan, "pulse", 64, 80) == 0 {
+	if countVoiceInSection(plan, "pulse", 0, float64(plan.BeatsPerLoop)) != 0 || countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 64, 80) {
 		t.Fatal("the interlude and return do not contrast")
 	}
 	if len(plan.Notes) > 1200 {
@@ -659,18 +654,13 @@ func TestMusicFormBreaksAndReturns(t *testing.T) {
 	}
 }
 
-// TestHummingDependsOnScene checks that the vocal response is sparse and appears only for suitable interpreted artwork.
-func TestHummingDependsOnScene(t *testing.T) {
-	quiet := analysis.StructuralAnalysis{Complexity: 0.2}
-	calm := composeMusic(quiet, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
-	person := composeMusic(quiet, semantic.SemanticAnalysis{Description: "A drawing of a stick figure."}, [32]byte{})
-	threat := composeMusic(quiet, semantic.SemanticAnalysis{Description: "A threatening violent scene."}, [32]byte{})
-	busy := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
-	if countVoiceInSection(calm, "hum", 48, 64) != 2 || countVoiceInSection(person, "hum", 48, 64) != 2 {
-		t.Fatal("suitable calm or human scenes need a sparse vocal response")
-	}
-	if countVoiceInSection(threat, "hum", 0, float64(threat.BeatsPerLoop)) != 0 || countVoiceInSection(busy, "hum", 0, float64(busy.BeatsPerLoop)) != 0 {
-		t.Fatal("vocal response should be omitted for tense or complex scenes")
+// TestPianoScoresExcludeVocalsAndPercussion checks that the new solo-piano direction has no non-piano score events.
+func TestPianoScoresExcludeVocalsAndPercussion(t *testing.T) {
+	for _, scene := range []string{"A serene landscape.", "A threatening violent scene.", "A lively dancing scene.", "A drawing of a stick figure."} {
+		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.5}, semantic.SemanticAnalysis{Description: scene}, [32]byte{})
+		if countVoiceInSection(plan, "hum", 0, float64(plan.BeatsPerLoop)) != 0 || countVoiceInSection(plan, "pulse", 0, float64(plan.BeatsPerLoop)) != 0 {
+			t.Fatalf("non-piano events remain for %q", scene)
+		}
 	}
 }
 

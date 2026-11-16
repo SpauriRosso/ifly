@@ -105,10 +105,10 @@ var padSustainBeats = [4]float64{3.4, 2.6, 3.1, 2.1}
 // musicalStyles keeps musical choices as data so the score generator only arranges and transforms them.
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {
-		mood: "calm", mode: "pentatonic", timbre: "warm", baseTempo: 64,
+		mood: "calm", mode: "major", timbre: "warm", baseTempo: 64,
 		pianoLead:    true,
 		tempoArc:     [6]int{0, 3, 6, -5, 4, -3},
-		scale:        []int{0, 2, 4, 7, 9},
+		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {9, 3}, {5, 4}, {7, 4}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {2, 3}, {7, 4}},
 		melodyRhythm: [2][]float64{{0, 1.5, 3}, {0, 2.5}},
@@ -118,6 +118,7 @@ var musicalStyles = map[string]musicalCharacter{
 	},
 	"tense": {
 		mood: "tense", mode: "minor", timbre: "dark", baseTempo: 98,
+		pianoLead:    true,
 		tempoArc:     [6]int{0, 4, 9, -7, 6, -4},
 		scale:        []int{0, 2, 3, 5, 7, 8, 10},
 		progression:  [4]chordSpec{{0, 3}, {8, 4}, {10, 4}, {7, 4}},
@@ -128,6 +129,7 @@ var musicalStyles = map[string]musicalCharacter{
 	},
 	"energetic": {
 		mood: "energetic", mode: "major", timbre: "bright", baseTempo: 106,
+		pianoLead:    true,
 		tempoArc:     [6]int{0, 5, 10, -6, 7, -2},
 		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {9, 3}},
