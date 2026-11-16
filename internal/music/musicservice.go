@@ -10,7 +10,7 @@ import (
 	"ifly/internal/semantic"
 )
 
-// MusicNote is one scheduled instrument event measured in beats from the start of a loop.
+// MusicNote is one scheduled instrument event measured in beats from the start of a score.
 type MusicNote struct {
 	Beat     float64 `json:"beat"`
 	Duration float64 `json:"duration"`

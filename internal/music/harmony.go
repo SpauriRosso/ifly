@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// harmonyForBar takes a style and form position, then chooses a phrase chord that prepares a dominant before each return and resolves the final bar.
+// harmonyForBar takes a style and bar position, then chooses its chord, prepares the opening and reprise cadences, and resolves the final bar.
 func harmonyForBar(character musicalCharacter, bar, section, finalBar int) chordSpec {
 	position := bar % 4
 	chord := character.progression[position]
