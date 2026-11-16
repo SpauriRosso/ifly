@@ -153,6 +153,28 @@ func TestBassLineChangesItsResponse(t *testing.T) {
 	}
 }
 
+// TestCounterlineUsesItsOwnRangeAndOnsets checks that the middle instrument answers between bass and lead while the opening leaves space.
+func TestCounterlineUsesItsOwnRangeAndOnsets(t *testing.T) {
+	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
+	totals := map[string]int{}
+	counts := map[string]int{}
+	for _, note := range plan.Notes {
+		if note.Beat < 32 || note.Beat >= 48 {
+			continue
+		}
+		if note.Voice == "bass" || note.Voice == "arp" || note.Voice == "lead" {
+			totals[note.Voice] += note.MIDI
+			counts[note.Voice]++
+		}
+	}
+	if counts["bass"] == 0 || counts["arp"] == 0 || counts["lead"] == 0 || totals["bass"]/counts["bass"] >= totals["arp"]/counts["arp"] || totals["arp"]/counts["arp"] >= totals["lead"]/counts["lead"] {
+		t.Fatalf("instrumental ranges collapsed together: totals=%v counts=%v", totals, counts)
+	}
+	if countVoiceInSection(plan, "pad", 0, 16) >= countVoiceInSection(plan, "pad", 32, 48) {
+		t.Fatal("opening accompaniment does not leave space for the melody")
+	}
+}
+
 // TestMelodyDevelopsWithoutRegisterJumps checks that the reprise changes the theme while consecutive pitches stay nearby.
 func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.8}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})

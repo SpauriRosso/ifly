@@ -11,12 +11,20 @@ func arpeggioNotes(start float64, section, bar int, voicing [3]int, energy float
 	}
 	notes := make([]MusicNote, 0, len(rhythm))
 	for index, beat := range rhythm {
-		pitch := voicing[(index+bar)%3] + 12
+		voiceIndex := (bar + index + section) % len(voicing)
+		if section == 2 && bar%2 == 1 {
+			voiceIndex = (bar + len(voicing) - index%len(voicing)) % len(voicing)
+		}
+		pitch := voicing[voiceIndex]
 		velocity := 0.34 * energy
 		if section == 2 {
 			velocity = 0.4 * energy
 		}
-		notes = append(notes, MusicNote{Beat: start + beat, Duration: 0.44, MIDI: pitch, Velocity: velocity, Voice: "arp"})
+		duration := 0.52
+		if section == 2 && index%2 == 1 {
+			duration = 0.38
+		}
+		notes = append(notes, MusicNote{Beat: start + beat, Duration: duration, MIDI: pitch, Velocity: velocity, Voice: "arp"})
 	}
 	return notes
 }

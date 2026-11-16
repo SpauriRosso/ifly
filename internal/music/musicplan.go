@@ -92,8 +92,11 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		}
 		voicing := voiceChord(chordRoot, chord.third, previousVoicing, bar > 0)
 		previousVoicing = voicing
-		for _, pitch := range voicing {
-			notes = append(notes, MusicNote{start, padLength, pitch, 0.3 * energy, "pad"})
+		for voiceIndex, pitch := range voicing {
+			if (section == 0 || section == 3) && voiceIndex == 1 {
+				continue
+			}
+			notes = append(notes, MusicNote{start, padLength, pitch, 0.24 * energy, "pad"})
 		}
 		notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character)...)
 		notes = append(notes, bassNotes(start, bar, section, finalBar, chordRoot, chord.third, energy, character)...)
