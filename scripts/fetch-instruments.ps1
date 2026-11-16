@@ -3,7 +3,6 @@ $ErrorActionPreference = 'Stop'
 $root = Join-Path $PSScriptRoot '..\frontend\public\samples\fluidr3'
 $baseUrl = 'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FluidR3_GM'
 $instruments = [ordered]@{
-    acoustic_grand_piano = @('C3', 'G3', 'D4', 'A4', 'E5', 'B5', 'G6')
     acoustic_guitar_nylon = @('C3', 'G3', 'D4', 'A4', 'E5', 'B5')
     acoustic_bass = @('C2', 'G2', 'D3', 'A3', 'E4')
     violin = @('C4', 'G4', 'D5', 'A5', 'E6')

@@ -13,43 +13,46 @@ export interface InstrumentSample {
 }
 
 export interface InstrumentDefinition {
-  folder: string
+  path: string
   sustain: boolean
   samples: InstrumentSample[]
 }
 
 // INSTRUMENTS lists the local General MIDI sample anchors and whether an instrument can sustain a note.
 export const INSTRUMENTS: Record<InstrumentId, InstrumentDefinition> = {
-  piano: { folder: 'acoustic_grand_piano', sustain: false, samples: [
-    { midi: 48, file: 'C3' }, { midi: 55, file: 'G3' }, { midi: 62, file: 'D4' },
-    { midi: 69, file: 'A4' }, { midi: 76, file: 'E5' }, { midi: 83, file: 'B5' }, { midi: 91, file: 'G6' },
+  piano: { path: 'salamander', sustain: false, samples: [
+    { midi: 36, file: 'C2' }, { midi: 39, file: 'Ds2' }, { midi: 42, file: 'Fs2' }, { midi: 45, file: 'A2' },
+    { midi: 48, file: 'C3' }, { midi: 51, file: 'Ds3' }, { midi: 54, file: 'Fs3' }, { midi: 57, file: 'A3' },
+    { midi: 60, file: 'C4' }, { midi: 63, file: 'Ds4' }, { midi: 66, file: 'Fs4' }, { midi: 69, file: 'A4' },
+    { midi: 72, file: 'C5' }, { midi: 75, file: 'Ds5' }, { midi: 78, file: 'Fs5' }, { midi: 81, file: 'A5' },
+    { midi: 84, file: 'C6' }, { midi: 87, file: 'Ds6' }, { midi: 90, file: 'Fs6' },
   ] },
-  guitar: { folder: 'acoustic_guitar_nylon', sustain: false, samples: [
+  guitar: { path: 'fluidr3/acoustic_guitar_nylon', sustain: false, samples: [
     { midi: 48, file: 'C3' }, { midi: 55, file: 'G3' }, { midi: 62, file: 'D4' },
     { midi: 69, file: 'A4' }, { midi: 76, file: 'E5' }, { midi: 83, file: 'B5' },
   ] },
-  bass: { folder: 'acoustic_bass', sustain: false, samples: [
+  bass: { path: 'fluidr3/acoustic_bass', sustain: false, samples: [
     { midi: 36, file: 'C2' }, { midi: 43, file: 'G2' }, { midi: 50, file: 'D3' },
     { midi: 57, file: 'A3' }, { midi: 64, file: 'E4' },
   ] },
-  violin: { folder: 'violin', sustain: true, samples: [
+  violin: { path: 'fluidr3/violin', sustain: true, samples: [
     { midi: 60, file: 'C4' }, { midi: 67, file: 'G4' }, { midi: 74, file: 'D5' },
     { midi: 81, file: 'A5' }, { midi: 88, file: 'E6' },
   ] },
-  cello: { folder: 'cello', sustain: true, samples: [
+  cello: { path: 'fluidr3/cello', sustain: true, samples: [
     { midi: 48, file: 'C3' }, { midi: 55, file: 'G3' }, { midi: 62, file: 'D4' },
     { midi: 69, file: 'A4' }, { midi: 76, file: 'E5' },
   ] },
-  flute: { folder: 'flute', sustain: true, samples: [
+  flute: { path: 'fluidr3/flute', sustain: true, samples: [
     { midi: 60, file: 'C4' }, { midi: 67, file: 'G4' }, { midi: 74, file: 'D5' },
     { midi: 81, file: 'A5' }, { midi: 88, file: 'E6' },
   ] },
-  voice: { folder: 'voice_oohs', sustain: true, samples: [
+  voice: { path: 'fluidr3/voice_oohs', sustain: true, samples: [
     { midi: 60, file: 'C4' }, { midi: 67, file: 'G4' }, { midi: 74, file: 'D5' },
     { midi: 81, file: 'A5' }, { midi: 88, file: 'E6' },
   ] },
-  woodblock: { folder: 'woodblock', sustain: false, samples: [{ midi: 60, file: 'C4' }] },
-  timpani: { folder: 'timpani', sustain: false, samples: [{ midi: 48, file: 'C3' }] },
+  woodblock: { path: 'fluidr3/woodblock', sustain: false, samples: [{ midi: 60, file: 'C4' }] },
+  timpani: { path: 'fluidr3/timpani', sustain: false, samples: [{ midi: 48, file: 'C3' }] },
 }
 
 // nearestSample takes an instrument and MIDI pitch, then returns the closest local sample anchor for transposition.
@@ -69,5 +72,5 @@ export function sampleKey(instrument: InstrumentId, sample: InstrumentSample): s
 
 // sampleUrl takes an instrument and anchor and returns its packaged offline MP3 URL.
 export function sampleUrl(instrument: InstrumentId, sample: InstrumentSample): string {
-  return `/samples/fluidr3/${INSTRUMENTS[instrument].folder}/${sample.file}.mp3`
+  return `/samples/${INSTRUMENTS[instrument].path}/${sample.file}.mp3`
 }
