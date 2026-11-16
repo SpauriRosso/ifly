@@ -48,7 +48,7 @@ func (s *MusicService) Compose(dataURL string, interpretation semantic.SemanticA
 	if err != nil {
 		return MusicPlan{}, err
 	}
-	if utf8.RuneCountInString(interpretation.Description) > 300 || len(interpretation.Subjects) > 8 {
+	if utf8.RuneCountInString(interpretation.Description) > 300 || utf8.RuneCountInString(interpretation.Atmosphere) > 120 || len(interpretation.Subjects) > 8 {
 		return MusicPlan{}, errors.New("invalid semantic input")
 	}
 	for _, subject := range interpretation.Subjects {

@@ -6,6 +6,7 @@
  */
 export interface SemanticAnalysis {
     "description": string;
+    "atmosphere": string;
     "subjects": string[] | null;
     "uncertain": boolean;
     "source": string;

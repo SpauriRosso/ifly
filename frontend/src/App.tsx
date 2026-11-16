@@ -301,7 +301,7 @@ function App() {
       </section>
       <section className="inspector-section next-section">
         <h2>Interprétation locale</h2>
-        {semantic && <><p className="semantic-description">{semantic.description}</p><p className="hint">Sujets proposés : {semantic.subjects?.length ? semantic.subjects.join(', ') : 'non identifiés'}</p><p className="analysis-note">{semantic.uncertain ? 'Le modèle signale une incertitude.' : 'Proposition du modèle à vérifier : les croquis ambigus peuvent être mal reconnus.'}</p></>}
+        {semantic && <><p className="semantic-description">{semantic.description}</p>{semantic.atmosphere && <p className="hint">Atmosphère perçue : {semantic.atmosphere}</p>}<p className="hint">Sujets proposés : {semantic.subjects?.length ? semantic.subjects.join(', ') : 'non identifiés'}</p><p className="analysis-note">{semantic.uncertain ? 'Le modèle signale une incertitude.' : 'Proposition du modèle à vérifier : les croquis ambigus peuvent être mal reconnus.'}</p></>}
         {!semantic && busy === 'semantic' && <p className="hint" role="status">Le modèle local examine l’image…</p>}
         {semanticError && <p className="error" role="alert">{semanticError}</p>}
         {!semantic && !semanticError && busy !== 'semantic' && <p className="hint">{analysis ? 'La description locale sera proposée ici.' : 'Analysez l’image pour commencer.'}</p>}

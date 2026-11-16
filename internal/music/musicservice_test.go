@@ -67,6 +67,18 @@ func TestMusicServiceCompose(t *testing.T) {
 	}
 }
 
+// TestPondSceneSelectsGentleCharacter checks that visible water lilies and reflective light select a calm palette without artist recognition.
+func TestPondSceneSelectsGentleCharacter(t *testing.T) {
+	character := selectMusicalCharacter(semantic.SemanticAnalysis{
+		Description: "A painting of a bridge over a pond with water lilies and trees.",
+		Atmosphere:  "soft reflective light over still water",
+		Subjects:    []string{"bridge", "water lilies", "trees"},
+	})
+	if character.mood != "calm" {
+		t.Fatalf("pond scene did not select a gentle palette: %s", character.mood)
+	}
+}
+
 // TestComposeMusicUsesVisualComplexity checks that added visual detail changes melodic density for the same interpreted scene.
 func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 	interpretation := semantic.SemanticAnalysis{Description: "A serene landscape."}

@@ -23,6 +23,7 @@ import (
 // SemanticAnalysis is an unverified local model description, separate from measured visual features.
 type SemanticAnalysis struct {
 	Description string   `json:"description"`
+	Atmosphere  string   `json:"atmosphere"`
 	Subjects    []string `json:"subjects"`
 	Uncertain   bool     `json:"uncertain"`
 	Source      string   `json:"source"`
@@ -119,7 +120,8 @@ func (a *LlamaServerAnalyzer) Analyze(ctx context.Context, dataURL string) (Sema
 	schema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"description": map[string]any{"type": "string", "minLength": 1, "maxLength": 140},
+			"description": map[string]any{"type": "string", "minLength": 1, "maxLength": 180},
+			"atmosphere":  map[string]any{"type": "string", "maxLength": 80},
 			"subjects":    map[string]any{"type": "array", "maxItems": 3, "items": map[string]any{"type": "string", "maxLength": 24}},
 			"uncertain":   map[string]any{"type": "boolean"},
 		},
@@ -127,10 +129,10 @@ func (a *LlamaServerAnalyzer) Analyze(ctx context.Context, dataURL string) (Sema
 		"additionalProperties": false,
 	}
 	requestBody := map[string]any{
-		"model": "local-vlm", "temperature": 0, "max_tokens": 192, "stream": false,
+		"model": "local-vlm", "temperature": 0, "max_tokens": 256, "stream": false,
 		"response_format": map[string]any{"type": "json_object", "schema": schema},
 		"messages": []any{map[string]any{"role": "user", "content": []any{
-			map[string]any{"type": "text", "text": "Write one short factual sentence about the visible image. List at most three visible subjects. Use an empty subjects list for abstract patterns. Return only JSON."},
+			map[string]any{"type": "text", "text": "Return JSON with one factual sentence describing the visible scene, including light, color or texture when clear; a separate short atmosphere phrase grounded in visible evidence; and at most three visible subjects. Use an empty subjects list for abstract patterns. Do not guess the artist, artwork title, or unseen events."},
 			map[string]any{"type": "image_url", "image_url": map[string]any{"url": dataURL}},
 		}}},
 	}
@@ -166,7 +168,8 @@ func (a *LlamaServerAnalyzer) Analyze(ctx context.Context, dataURL string) (Sema
 		return SemanticAnalysis{}, errors.New("local VLM did not return valid JSON")
 	}
 	result.Description = strings.TrimSpace(result.Description)
-	if result.Description == "" || utf8.RuneCountInString(result.Description) > 140 || len(result.Subjects) > 3 {
+	result.Atmosphere = strings.TrimSpace(result.Atmosphere)
+	if result.Description == "" || utf8.RuneCountInString(result.Description) > 180 || utf8.RuneCountInString(result.Atmosphere) > 80 || len(result.Subjects) > 3 {
 		return SemanticAnalysis{}, errors.New("local VLM returned invalid semantic fields")
 	}
 	result.Description = normalizeSemanticDescription(result.Description)

@@ -25,6 +25,9 @@ func TestLlamaServerAnalyzerAcceptsValidReply(t *testing.T) {
 						Description struct {
 							MaxLength int `json:"maxLength"`
 						} `json:"description"`
+						Atmosphere struct {
+							MaxLength int `json:"maxLength"`
+						} `json:"atmosphere"`
 						Subjects struct {
 							MaxItems int `json:"maxItems"`
 						} `json:"subjects"`
@@ -46,14 +49,14 @@ func TestLlamaServerAnalyzerAcceptsValidReply(t *testing.T) {
 		if len(request.Messages) != 1 || len(request.Messages[0].Content) != 2 || request.Messages[0].Content[1].Type != "image_url" || !strings.HasPrefix(request.Messages[0].Content[1].ImageURL.URL, "data:image/png;base64,") {
 			t.Error("request did not contain the image")
 		}
-		if request.MaxTokens < 160 || request.ResponseFormat.Schema.Properties.Description.MaxLength == 0 || request.ResponseFormat.Schema.Properties.Subjects.MaxItems == 0 {
+		if request.MaxTokens < 200 || request.ResponseFormat.Schema.Properties.Description.MaxLength == 0 || request.ResponseFormat.Schema.Properties.Atmosphere.MaxLength == 0 || request.ResponseFormat.Schema.Properties.Subjects.MaxItems == 0 {
 			t.Error("request did not bound the structured model response")
 		}
-		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"{\"description\":\"A tree\",\"subjects\":[\"tree\"],\"uncertain\":false}"}}]}`))
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"{\"description\":\"A tree\",\"atmosphere\":\"soft morning light\",\"subjects\":[\"tree\"],\"uncertain\":false}"}}]}`))
 	}))
 	defer server.Close()
 	result, err := (&LlamaServerAnalyzer{endpoint: server.URL, client: server.Client()}).Analyze(context.Background(), "data:image/png;base64,AA==")
-	if err != nil || result.Description != "A tree." || len(result.Subjects) != 1 || result.Source == "" {
+	if err != nil || result.Description != "A tree." || result.Atmosphere != "soft morning light" || len(result.Subjects) != 1 || result.Source == "" {
 		t.Fatalf("unexpected semantic result: %+v, %v", result, err)
 	}
 }

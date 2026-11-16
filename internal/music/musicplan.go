@@ -12,7 +12,7 @@ import (
 
 // selectMusicalCharacter takes the model's unverified words and returns a conservative mood and tonal vocabulary.
 func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCharacter {
-	words := strings.FieldsFunc(strings.ToLower(interpretation.Description+" "+strings.Join(interpretation.Subjects, " ")), func(r rune) bool {
+	words := strings.FieldsFunc(strings.ToLower(interpretation.Description+" "+interpretation.Atmosphere+" "+strings.Join(interpretation.Subjects, " ")), func(r rune) bool {
 		return !unicode.IsLetter(r)
 	})
 	scores := [3]int{}
@@ -20,9 +20,9 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 		switch word {
 		case "violent", "violence", "threat", "threatening", "torture", "suffering", "blood", "fear", "terrifying", "ominous", "tense", "danger", "storm":
 			scores[0] += 2
-		case "serene", "peaceful", "calm", "tranquil", "gentle", "quiet", "relaxed":
+		case "serene", "peaceful", "calm", "tranquil", "gentle", "quiet", "relaxed", "dreamy", "reflective", "soft", "delicate":
 			scores[1] += 2
-		case "sunset", "lullaby":
+		case "sunset", "lullaby", "lily", "lilies", "pond", "garden", "blossoms", "flowers", "reflection":
 			scores[1]++
 		case "dynamic", "energetic", "playful", "lively", "dancing", "vibrant", "motion":
 			scores[2] += 2
