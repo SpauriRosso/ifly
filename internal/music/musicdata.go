@@ -15,6 +15,8 @@ type musicalCharacter struct {
 	progression  [4]chordSpec
 	answer       [4]chordSpec
 	bridge       [4]chordSpec
+	bridgeReturn [4]chordSpec
+	climax       [4]chordSpec
 	melodyRhythm [2][]float64
 	windLead     bool
 	pianoLead    bool
@@ -120,6 +122,8 @@ var musicalStyles = map[string]musicalCharacter{
 		progression:  [4]chordSpec{{0, 4}, {9, 3}, {5, 4}, {7, 4}},
 		answer:       [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {0, 4}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {2, 4}, {7, 4}},
+		bridgeReturn: [4]chordSpec{{5, 4}, {2, 3}, {2, 4}, {7, 4}},
+		climax:       [4]chordSpec{{0, 4}, {9, 3}, {2, 4}, {7, 4}},
 		melodyRhythm: [2][]float64{{0, 1.5, 3}, {0, 2.5}},
 		bassBeats:    []float64{0},
 		arpBeats:     []float64{0.75, 1.75, 2.75, 3.25},
@@ -134,6 +138,8 @@ var musicalStyles = map[string]musicalCharacter{
 		progression:  [4]chordSpec{{0, 3}, {8, 4}, {10, 4}, {7, 4}},
 		answer:       [4]chordSpec{{0, 3}, {5, 3}, {7, 4}, {0, 3}},
 		bridge:       [4]chordSpec{{5, 3}, {8, 4}, {2, 4}, {7, 4}},
+		bridgeReturn: [4]chordSpec{{8, 4}, {5, 3}, {2, 4}, {7, 4}},
+		climax:       [4]chordSpec{{0, 3}, {8, 4}, {2, 4}, {7, 4}},
 		melodyRhythm: [2][]float64{{0, 0.75, 2, 2.75}, {0, 1.5, 2.25, 3.25}},
 		bassBeats:    []float64{0, 2}, pulseBeats: []float64{1, 3},
 		arpBeats: []float64{0.5, 1.5, 2.5, 3.5},
@@ -147,6 +153,8 @@ var musicalStyles = map[string]musicalCharacter{
 		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {9, 3}},
 		answer:       [4]chordSpec{{0, 4}, {2, 3}, {7, 4}, {0, 4}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {2, 4}, {7, 4}},
+		bridgeReturn: [4]chordSpec{{5, 4}, {9, 3}, {2, 4}, {7, 4}},
+		climax:       [4]chordSpec{{0, 4}, {5, 4}, {2, 4}, {7, 4}},
 		melodyRhythm: [2][]float64{{0, 0.75, 1.75, 3}, {0, 1, 2.5, 3.25}},
 		bassBeats:    []float64{0, 2}, pulseBeats: []float64{1, 3},
 		arpBeats: []float64{0.5, 1.5, 2.5, 3.5},
@@ -160,6 +168,8 @@ var musicalStyles = map[string]musicalCharacter{
 		progression:  [4]chordSpec{{0, 3}, {5, 4}, {10, 4}, {0, 3}},
 		answer:       [4]chordSpec{{0, 3}, {10, 4}, {7, 4}, {0, 3}},
 		bridge:       [4]chordSpec{{10, 4}, {5, 4}, {2, 4}, {7, 4}},
+		bridgeReturn: [4]chordSpec{{5, 4}, {10, 4}, {2, 4}, {7, 4}},
+		climax:       [4]chordSpec{{0, 3}, {5, 4}, {2, 4}, {7, 4}},
 		melodyRhythm: [2][]float64{{0, 1.5, 3}, {0, 2}},
 		bassBeats:    []float64{0, 2},
 		arpBeats:     []float64{0.75, 1.75, 2.75, 3.25},

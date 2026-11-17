@@ -11,7 +11,16 @@ func harmonyForBar(character musicalCharacter, bar, section, finalBar int) chord
 	chord := character.progression[position]
 	if section == 1 {
 		chord = character.answer[position]
-	} else if section == 2 || (section == 4 && position == 2) {
+	} else if section == 2 {
+		switch bar / 4 {
+		case 6:
+			chord = character.bridgeReturn[position]
+		case 9:
+			chord = character.climax[position]
+		default:
+			chord = character.bridge[position]
+		}
+	} else if section == 4 && position == 2 {
 		chord = character.bridge[position]
 	}
 	if section == 3 {
