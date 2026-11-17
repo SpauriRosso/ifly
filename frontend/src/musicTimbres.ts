@@ -42,10 +42,10 @@ export const FLUTE_EXPRESSION = {
 
 // PIANO_VOICES separates the two piano hands and quiet inner chord notes in the sampled solo instrument.
 const PIANO_VOICES: TimbreProfile['voices'] = {
-  pad: { instrument: 'piano', gain: 0.12, attack: 0.012, release: 0.42, cutoff: 4900 },
-  bass: { instrument: 'piano', gain: 0.36, attack: 0.006, release: 0.32, cutoff: 4800 },
-  lead: { instrument: 'piano', gain: 0.88, attack: 0.006, release: 0.38, cutoff: 7200 },
-  arp: { instrument: 'piano', gain: 0.27, attack: 0.006, release: 0.24, cutoff: 5900 },
+  pad: { instrument: 'piano', gain: 0.4, attack: 0.012, release: 0.42, cutoff: 4900 },
+  bass: { instrument: 'piano', gain: 0.5, attack: 0.006, release: 0.32, cutoff: 4800 },
+  lead: { instrument: 'piano', gain: 0.82, attack: 0.006, release: 0.38, cutoff: 7200 },
+  arp: { instrument: 'piano', gain: 0.6, attack: 0.006, release: 0.24, cutoff: 5900 },
   hum: { instrument: 'piano', gain: 0, attack: 0.01, release: 0.2, cutoff: 4000 },
   pulse: { gain: 0, attack: 0.003, cutoff: 2000 },
 }

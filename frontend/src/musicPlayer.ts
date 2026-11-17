@@ -248,7 +248,7 @@ export class MusicPlayer {
     source.connect(envelope).connect(filter)
     filter.connect(master)
     if (this.echo && timbre.instrument !== 'piano' && (voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.echo)
-    if (this.room && (voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.room)
+    if (this.room && (piano || voice === 'pad' || voice === 'lead' || voice === 'arp' || voice === 'hum')) filter.connect(this.room)
     source.onended = () => {
       source.disconnect()
       envelope.disconnect()
