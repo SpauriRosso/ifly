@@ -58,3 +58,35 @@ func TestPianoStrongBeatsAgreeWithHarmony(t *testing.T) {
 		}
 	}
 }
+
+// TestPianoAttacksFitModeOrChord checks that each right-hand attack is explained by the scene's mode or its active harmony.
+func TestPianoAttacksFitModeOrChord(t *testing.T) {
+	for _, description := range []string{"A serene pond.", "A lonely figure mourning.", "A threatening storm.", "A joyful dance."} {
+		meaning := semantic.SemanticAnalysis{Description: description}
+		for variant := byte(0); variant < 3; variant++ {
+			var digest [32]byte
+			digest[3] = variant
+			root := 48 + int(digest[0]%12)
+			plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.5}, meaning, digest)
+			character := choosePianoPalette(selectMusicalCharacter(meaning), digest)
+			measures := planPianoMeasures(root, plan.BeatsPerLoop/4-1, plan.Sections, digest, character)
+			for _, note := range plan.Notes {
+				if note.Voice != "lead" {
+					continue
+				}
+				bar := int(note.Beat / 4)
+				chord := measures[bar].chordAt(note.Beat - float64(bar*4))
+				inChord := pitchBelongsToChord(note.MIDI, chordPitchClasses(root+chord.rootOffset, chord.third))
+				inMode := false
+				for _, degree := range character.scale {
+					if note.MIDI%12 == (root+degree)%12 {
+						inMode = true
+					}
+				}
+				if !inChord && !inMode {
+					t.Fatalf("%s variant %d beat %.2f has MIDI %d outside mode %s and chord %+v", description, variant, note.Beat, note.MIDI, character.mode, chord)
+				}
+			}
+		}
+	}
+}
