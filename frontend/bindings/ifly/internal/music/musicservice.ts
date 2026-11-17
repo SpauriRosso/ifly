@@ -14,15 +14,8 @@ import * as semantic$0 from "../semantic/models.js";
 import * as $models from "./models.js";
 
 /**
- * Compose takes an image and model result, then returns the deterministic score for its default seed and inferred theme.
+ * Compose takes an image and model result, then infers a theme and returns a deterministic score from the image seed.
  */
 export function Compose(dataURL: string, interpretation: semantic$0.SemanticAnalysis): $CancellablePromise<$models.MusicPlan> {
     return $Call.ByID(4163890695, dataURL, interpretation);
-}
-
-/**
- * ComposeVariant takes an image, model result, optional 16-digit hex seed, and optional theme, then returns a repeatable piano score.
- */
-export function ComposeVariant(dataURL: string, interpretation: semantic$0.SemanticAnalysis, seed: string, theme: string): $CancellablePromise<$models.MusicPlan> {
-    return $Call.ByID(3462641864, dataURL, interpretation, seed, theme);
 }

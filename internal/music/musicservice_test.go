@@ -83,34 +83,6 @@ func TestDisplayedSeedDrivesMusicalChoices(t *testing.T) {
 	}
 }
 
-// TestComposeVariant checks that a visible seed reproduces the same score and that a selected theme overrides scene inference.
-func TestComposeVariant(t *testing.T) {
-	dataURL := encodeTestImage(t, image.NewRGBA(image.Rect(0, 0, 16, 16)))
-	service := &MusicService{}
-	interpretation := semantic.SemanticAnalysis{Description: "A serene pond."}
-	first, err := service.ComposeVariant(dataURL, interpretation, "0123456789abcdef", "melancholy")
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := service.ComposeVariant(dataURL, interpretation, first.Seed, "melancholy")
-	if err != nil || !reflect.DeepEqual(first, second) {
-		t.Fatalf("same visible seed and theme changed the score: %v", err)
-	}
-	joyful, err := service.ComposeVariant(dataURL, interpretation, first.Seed, "energetic")
-	if err != nil || joyful.Mood != "energetic" || reflect.DeepEqual(first.Notes, joyful.Notes) {
-		t.Fatalf("theme override did not change the score: %v", err)
-	}
-	if first.Mood != "melancholy" || first.Seed != "0123456789abcdef" {
-		t.Fatalf("variant lost its selected controls: %+v", first)
-	}
-	if _, err := service.ComposeVariant(dataURL, interpretation, "not-a-seed", "calm"); err == nil {
-		t.Fatal("invalid seed was accepted")
-	}
-	if _, err := service.ComposeVariant(dataURL, interpretation, first.Seed, "unknown"); err == nil {
-		t.Fatal("invalid theme was accepted")
-	}
-}
-
 // TestPondSceneSelectsGentleCharacter checks that visible water lilies and reflective light select a calm palette without artist recognition.
 func TestPondSceneSelectsGentleCharacter(t *testing.T) {
 	character := selectMusicalCharacter(semantic.SemanticAnalysis{

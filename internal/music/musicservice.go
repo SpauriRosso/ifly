@@ -47,13 +47,8 @@ func scoreDigestFromImageDigest(imageDigest [32]byte) [32]byte {
 	return sha256.Sum256(imageDigest[:8])
 }
 
-// Compose takes an image and model result, then returns the deterministic score for its default seed and inferred theme.
+// Compose takes an image and model result, then infers a theme and returns a deterministic score from the image seed.
 func (s *MusicService) Compose(dataURL string, interpretation semantic.SemanticAnalysis) (MusicPlan, error) {
-	return s.ComposeVariant(dataURL, interpretation, "", "")
-}
-
-// ComposeVariant takes an image, model result, optional 16-digit hex seed, and optional theme, then returns a repeatable piano score.
-func (s *MusicService) ComposeVariant(dataURL string, interpretation semantic.SemanticAnalysis, seed, theme string) (MusicPlan, error) {
 	image, err := analysis.DecodeImage(dataURL)
 	if err != nil {
 		return MusicPlan{}, err
@@ -66,27 +61,8 @@ func (s *MusicService) ComposeVariant(dataURL string, interpretation semantic.Se
 			return MusicPlan{}, errors.New("invalid semantic subject")
 		}
 	}
-	if theme != "" && theme != "auto" {
-		if _, ok := musicalStyles[theme]; !ok {
-			return MusicPlan{}, errors.New("invalid musical theme")
-		}
-	}
 	imageDigest := sha256.Sum256([]byte(dataURL))
-	seedBytes := imageDigest[:8]
-	if seed != "" {
-		if len(seed) != 16 {
-			return MusicPlan{}, errors.New("seed must contain 16 hexadecimal digits")
-		}
-		seedBytes, err = hex.DecodeString(seed)
-		if err != nil {
-			return MusicPlan{}, errors.New("seed must contain 16 hexadecimal digits")
-		}
-	}
-	character := selectMusicalCharacter(interpretation)
-	if theme != "" && theme != "auto" {
-		character = musicalStyles[theme]
-	}
-	plan := composeMusicForCharacter(analysis.MeasureImage(image), interpretation, sha256.Sum256(seedBytes), character)
-	plan.Seed = hex.EncodeToString(seedBytes)
+	plan := composeMusic(analysis.MeasureImage(image), interpretation, scoreDigestFromImageDigest(imageDigest))
+	plan.Seed = hex.EncodeToString(imageDigest[:8])
 	return plan, nil
 }
