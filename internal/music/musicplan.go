@@ -67,9 +67,11 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	var previousVoicing [3]int
 	previousLeadPitch := 0
 	finalBar := len(sections)*4 - 1
-	var pianoBars [][]MusicNote
 	if character.pianoLead {
-		pianoBars = planPianoMelody(root, finalBar, complexity, sections, digest, character)
+		notes = composePianoScore(root, finalBar, complexity, sections, digest, character)
+		expressNotes(notes, digest, float64(finalBar*4))
+		sort.SliceStable(notes, func(i, j int) bool { return notes[i].Beat < notes[j].Beat })
+		return MusicPlan{Mood: character.mood, Mode: character.mode, Timbre: character.timbre, TempoBPM: tempo, BeatsPerLoop: finalBar*4 + 4, Sections: sections, Notes: notes}
 	}
 	for bar := 0; bar <= finalBar; bar++ {
 		start := float64(bar * 4)
@@ -97,33 +99,21 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		if character.colorTone != 0 && bar%2 == 0 && section != 3 && bar != finalBar {
 			notes = append(notes, MusicNote{start + 0.3, 2.1, chordRoot + character.colorTone, 0.16 * energy, "pad"})
 		}
-		if character.pianoLead && bar != finalBar {
-			notes = append(notes, pianoCadentialSeventh(start, bar, section, chordRoot, chord, energy)...)
-		}
 		notes = append(notes, bassNotes(start, bar, section, finalBar, chordRoot, chord.third, energy, character)...)
-		if !character.pianoLead && section != 3 && bar != finalBar && (section != 5 || bar%4 < 2) {
+		if section != 3 && bar != finalBar && (section != 5 || bar%4 < 2) {
 			for _, beat := range character.pulseBeats {
 				notes = append(notes, MusicNote{start + beat, 0.18, root, 0.32 * energy, "pulse"})
 			}
 		}
-		var lead []MusicNote
-		if character.pianoLead {
-			lead = pianoBars[bar]
-		} else {
-			currentMotif := motif
-			if section == 2 || section == 3 {
-				currentMotif = bridgeMotif
-			}
-			currentMotif = turnMotif(currentMotif, episode.motifTurn)
-			lead, previousLeadPitch = melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
+		currentMotif := motif
+		if section == 2 || section == 3 {
+			currentMotif = bridgeMotif
 		}
+		currentMotif = turnMotif(currentMotif, episode.motifTurn)
+		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
-		if character.pianoLead {
-			notes = append(notes, pianoRightHandDoubling(lead, chordRoot, chord.third, bar, section)...)
-			notes = append(notes, pianoLeftHandNotes(start, bar, section, finalBar, voicing, energy, character)...)
-		} else {
-			notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)
-		}
+		notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)
+		previousLeadPitch = finalPitch
 		if useHum {
 			notes = append(notes, hummingNotes(start, section, bar, chordRoot, chord.third, energy)...)
 		}

@@ -57,12 +57,12 @@ func pianoDiatonicPitch(base int, scale []int, degree int) int {
 }
 
 // pianoPhraseEvents takes one episode, its harmony, visual complexity, and image seed, then returns ordered melody targets for the whole phrase.
-func pianoPhraseEvents(episodeIndex, root, finalBar int, complexity float64, digest [32]byte, character musicalCharacter) []pianoMelodyEvent {
+func pianoPhraseEvents(episodeIndex, root, finalBar int, complexity float64, digest [32]byte, character musicalCharacter, measures []pianoMeasure) []pianoMelodyEvent {
 	episode := formEpisodes[episodeIndex]
 	events := []pianoMelodyEvent{}
 	for position := 0; position < 4; position++ {
 		bar := episodeIndex*4 + position
-		chord := harmonyForBar(character, bar, episode.role, finalBar)
+		chord := measures[bar].chord
 		for _, beat := range pianoRhythmForBar(character.mood, episode.role, position, complexity) {
 			events = append(events, pianoMelodyEvent{
 				bar: bar, beat: beat, chordRoot: root + chord.rootOffset, third: chord.third,
@@ -207,12 +207,12 @@ func harmonizePianoPhrase(events []pianoMelodyEvent, previousPitch, tonalRoot in
 	return pitches
 }
 
-// planPianoMelody takes form, harmony, visual complexity, and an image seed, then returns complete lead phrases indexed by bar.
-func planPianoMelody(root, finalBar int, complexity float64, sections []MusicSection, digest [32]byte, character musicalCharacter) [][]MusicNote {
+// planPianoMelody takes a harmonic skeleton, form, and image seed, then returns complete right-hand phrases indexed by bar.
+func planPianoMelody(root, finalBar int, complexity float64, sections []MusicSection, digest [32]byte, character musicalCharacter, measures []pianoMeasure) [][]MusicNote {
 	bars := make([][]MusicNote, finalBar+1)
 	previous := 0
 	for episodeIndex := range sections {
-		events := pianoPhraseEvents(episodeIndex, root, finalBar, complexity, digest, character)
+		events := pianoPhraseEvents(episodeIndex, root, finalBar, complexity, digest, character, measures)
 		pitches := harmonizePianoPhrase(events, previous, root, character.scale)
 		for index, event := range events {
 			duration := math.Min(1.7, 4-event.beat-0.18)
