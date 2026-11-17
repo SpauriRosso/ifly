@@ -44,6 +44,9 @@ func subdividePianoInterval(first, last MusicNote, depth, tonalRoot int, measure
 	if !ok {
 		return nil
 	}
+	if math.Abs(math.Remainder(beat, 2)) < 0.01 && !pitchBelongsToChord(pitch, chordPitchClasses(tonalRoot+chord.rootOffset, chord.third)) {
+		return nil
+	}
 	between := MusicNote{Beat: beat, Duration: math.Min(0.5, gap/2-0.08), MIDI: pitch, Velocity: 0.76 * math.Min(first.Velocity, last.Velocity), Voice: "lead"}
 	notes := subdividePianoInterval(first, between, depth-1, tonalRoot, measure, scale)
 	notes = append(notes, between)
