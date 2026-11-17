@@ -57,6 +57,9 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 // composeMusic takes measured structure, tentative semantics, and an image digest and returns a long-form score with related episodes.
 func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic.SemanticAnalysis, digest [32]byte) MusicPlan {
 	character := selectMusicalCharacter(interpretation)
+	if character.pianoLead {
+		character = choosePianoPalette(character, digest)
+	}
 	useHum := !character.pianoLead && shouldHum(structure, interpretation, character)
 	complexity := math.Max(0, math.Min(1, structure.Complexity))
 	tempo := character.baseTempo + int(math.Round(10*complexity))
