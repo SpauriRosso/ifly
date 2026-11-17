@@ -24,6 +24,14 @@ var pianoInterludeRhythms = [4][]float64{{0, 2}, nil, {0, 2.5}, nil}
 var pianoEndingRhythms = [4][]float64{{0, 1.5, 3}, {0, 2}, {0, 2.5}, {0}}
 var pianoVariationRhythms = [4][]float64{nil, {0, 1, 2.5, 3.25}, {0, 0.5, 1.5, 2.5, 3.25}, nil}
 
+// pianoEpisodeRhythms gives later returns their own four-bar gestures while preserving phrase arrivals.
+var pianoEpisodeRhythms = map[int][4][]float64{
+	5:  {{0, 0.75, 1.5, 2.25, 3.25}, {0, 1, 1.75, 2.75}, {0, 0.75, 1.25, 2, 3}, {0, 1, 2.25, 3}},
+	6:  {{0, 1.25, 2, 2.75, 3.5}, {0, 0.75, 1.75, 2.5, 3.25}, {0, 1, 1.5, 2.25, 3}, {0, 1.5, 2.25, 3}},
+	9:  {{0, 0.5, 1.25, 2, 2.75, 3.5}, {0, 0.75, 1.25, 1.75, 2.5, 3.25}, {0, 0.5, 1, 1.75, 2.25, 3}, {0, 0.75, 1.5, 2.25, 3}},
+	12: {{0, 1.5, 2.5}, {0, 1.25, 3}, {0, 1.5, 2.25, 3.25}, {0, 1.5, 3}},
+}
+
 var pianoQuestionContour = [16]int{0, 1, 3, 2, 1, 2, 0, 1, 2, 4, 5, 3, 2, 1, 0, 1}
 var pianoVariationContour = [16]int{0, 2, 3, 1, 2, 4, 3, 1, 3, 2, 5, 4, 3, 1, 0, 1}
 var pianoAnswerContour = [16]int{3, 4, 2, 5, 4, 2, 1, 3, 5, 4, 2, 3, 2, 1, 0, 1}

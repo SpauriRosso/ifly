@@ -17,8 +17,9 @@ type pianoPitchChoice struct {
 	chordTone bool
 }
 
-// pianoRhythmForBar takes a scene mood, phrase role, and visual complexity, then returns one bar's melodic onsets.
-func pianoRhythmForBar(mood string, role, position int, complexity float64) []float64 {
+// pianoRhythmForBar takes a scene mood, episode index, bar position, and visual complexity, then returns that bar's melodic onsets.
+func pianoRhythmForBar(mood string, episodeIndex, position int, complexity float64) []float64 {
+	role := formEpisodes[episodeIndex].role
 	if role == 3 {
 		return pianoInterludeRhythms[position]
 	}
@@ -29,7 +30,9 @@ func pianoRhythmForBar(mood string, role, position int, complexity float64) []fl
 	if role == 1 && pianoVariationRhythms[position] != nil {
 		rhythm = pianoVariationRhythms[position]
 	}
-	if role == 2 && position < 3 {
+	if developed, ok := pianoEpisodeRhythms[episodeIndex]; ok {
+		rhythm = developed[position]
+	} else if role == 2 && position < 3 {
 		rhythm = append([]float64{rhythm[0], 0.25}, rhythm[1:]...)
 	}
 	if complexity >= 0.45 && (mood == "calm" || mood == "neutral") && position%2 == 0 && role != 5 && role != 3 {
@@ -62,7 +65,7 @@ func pianoPhraseEvents(episodeIndex, root, finalBar int, complexity float64, dig
 	events := []pianoMelodyEvent{}
 	for position := 0; position < 4; position++ {
 		bar := episodeIndex*4 + position
-		for _, beat := range pianoRhythmForBar(character.mood, episode.role, position, complexity) {
+		for _, beat := range pianoRhythmForBar(character.mood, episodeIndex, position, complexity) {
 			chord := measures[bar].chordAt(beat)
 			events = append(events, pianoMelodyEvent{
 				bar: bar, beat: beat, chordRoot: root + chord.rootOffset, third: chord.third,
