@@ -64,7 +64,7 @@ var formEpisodes = [...]formEpisode{
 	{"Respiration", 3, 0.38, -4, 1},
 	{"Reprise", 4, 0.90, 0, 1},
 	{"Climax", 2, 1.00, 2, 2},
-	{"Silence", 3, 0.34, -3, 2},
+	{"Transition", 3, 0.50, -3, 2},
 	{"Dernier retour", 4, 0.84, -1, 0},
 	{"Écho", 0, 0.66, -2, 2},
 	{"Suspension", 3, 0.28, -5, 0},
