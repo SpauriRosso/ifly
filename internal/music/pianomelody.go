@@ -97,6 +97,9 @@ func pianoPhraseEvents(episodeIndex, root, finalBar int, complexity float64, dig
 		events[index].target = pianoDiatonicPitch(base, character.scale, degree)
 	}
 	if len(events) > 0 {
+		if episode.role == 1 && measures[events[0].bar].chord.rootOffset == 0 {
+			events[0].cadence = 1
+		}
 		last := &events[len(events)-1]
 		if last.bar == finalBar || (episode.role == 1 && last.chordRoot == root) {
 			last.cadence = 1

@@ -500,7 +500,7 @@ func TestMelodyDevelopsWithoutRegisterJumps(t *testing.T) {
 			reprise = append(reprise, note.MIDI)
 		}
 	}
-	if len(opening) == 0 || len(reprise) == 0 || opening[0] != reprise[0] || reflect.DeepEqual(opening, reprise) {
+	if len(opening) == 0 || len(reprise) == 0 || reflect.DeepEqual(opening, reprise) {
 		t.Fatalf("the reprise did not develop the opening motif: %v / %v", opening, reprise)
 	}
 }

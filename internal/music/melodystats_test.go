@@ -56,18 +56,21 @@ func TestPianoMelodyFormsQuestionAndAnswer(t *testing.T) {
 			if len(pitchCounts) < 7 || mostRepeated*3 > len(opening) {
 				t.Fatalf("%q center %d repeats one pitch too often: %d pitches, %d/%d on the most common note", scene, center, len(pitchCounts), mostRepeated, len(opening))
 			}
-			var question, answer *MusicNote
+			var question, firstAnswer, answer *MusicNote
 			for index := range opening {
 				note := &opening[index]
 				if note.Beat < 16 {
 					question = note
 				} else {
+					if firstAnswer == nil {
+						firstAnswer = note
+					}
 					answer = note
 				}
 			}
 			root := 48 + int(center)
-			if question == nil || answer == nil || question.MIDI%12 != (root+11)%12 || answer.MIDI%12 != root%12 {
-				t.Fatalf("%q center %d lacks dominant-to-tonic phrase response: %v / %v", scene, center, question, answer)
+			if question == nil || firstAnswer == nil || answer == nil || question.MIDI%12 != (root+11)%12 || firstAnswer.MIDI%12 != root%12 || answer.MIDI%12 != root%12 {
+				t.Fatalf("%q center %d lacks a resolved question-and-answer period: %v / %v / %v", scene, center, question, firstAnswer, answer)
 			}
 		}
 	}
