@@ -9,7 +9,7 @@ func pianoRightHandDoubling(lead []MusicNote, chordRoot, third, bar, section int
 	chord := chordPitchClasses(chordRoot, third)
 	for distance := 3; distance <= 9; distance++ {
 		pitch := arrival.MIDI - distance
-		if pitch >= 64 && pitchBelongsToChord(pitch, chord) {
+		if pitch >= 67 && pitchBelongsToChord(pitch, chord) {
 			return []MusicNote{{Beat: arrival.Beat, Duration: arrival.Duration * 0.85, MIDI: pitch, Velocity: arrival.Velocity * 0.52, Voice: "lead"}}
 		}
 	}

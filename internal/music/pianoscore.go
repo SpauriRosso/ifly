@@ -58,7 +58,7 @@ func planPianoMeasures(root, finalBar int, sections []MusicSection, digest [32]b
 // composePianoScore takes the harmonic skeleton and form, then writes both piano hands and their inner chord voices as one score.
 func composePianoScore(root, finalBar int, complexity float64, sections []MusicSection, digest [32]byte, character musicalCharacter) []MusicNote {
 	measures := planPianoMeasures(root, finalBar, sections, digest, character)
-	melody := planPianoMelody(root, finalBar, complexity, sections, digest, character, measures)
+	melody := planPianoScoreLead(root, finalBar, complexity, sections, digest, character, measures)
 	notes := make([]MusicNote, 0, 700)
 	for _, measure := range measures {
 		start := float64(measure.bar * 4)

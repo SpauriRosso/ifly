@@ -57,7 +57,7 @@ func ornamentPianoBar(lead []MusicNote, measure pianoMeasure, complexity float64
 		return lead
 	}
 	depth := 0
-	if measure.role == 2 || measure.role == 4 || (measure.role == 1 && measure.bar%4 == 2) || (complexity > 0.7 && measure.bar%4 == 2) {
+	if measure.role == 2 || measure.role == 4 || (measure.role == 1 && measure.bar%4 == 2) || (complexity >= 0.45 && measure.bar%4 == 2) {
 		depth = 1
 	}
 	if measure.role == 2 && measure.bar/4 == 9 && complexity > 0.4 {
