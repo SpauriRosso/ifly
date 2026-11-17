@@ -46,12 +46,12 @@ func planPianoScoreLead(root, finalBar int, complexity float64, sections []Music
 		kind := pianoEpisodeFigures[episodeIndex]
 		phrase := pianoPhraseFigures[kind]
 		for position, figure := range phrase {
-			if position < 2 && (kind == pianoQuestion || kind == pianoConsequence) {
-				answer := 0
-				if kind == pianoConsequence {
-					answer = 1
+			if position < 2 && (kind == pianoTheme || kind == pianoVariation) {
+				variation := 0
+				if kind == pianoVariation {
+					variation = 1
 				}
-				figure = pianoOpeningIdeas[digest[1]%3][answer][position]
+				figure = pianoOpeningIdeas[digest[1]%3][variation][position]
 			}
 			bar := episodeIndex*4 + position
 			measure := measures[bar]

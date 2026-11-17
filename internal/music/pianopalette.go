@@ -13,7 +13,7 @@ func choosePianoPalette(character musicalCharacter, digest [32]byte) musicalChar
 		case 0:
 			character.progression[change.position] = change.chord
 		case 1:
-			character.answer[change.position] = change.chord
+			character.variation[change.position] = change.chord
 		case 2:
 			character.bridge[change.position] = change.chord
 		case 3:

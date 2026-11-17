@@ -13,7 +13,7 @@ type musicalCharacter struct {
 	tempoArc     [6]int
 	scale        []int
 	progression  [4]chordSpec
-	answer       [4]chordSpec
+	variation    [4]chordSpec
 	bridge       [4]chordSpec
 	bridgeReturn [4]chordSpec
 	climax       [4]chordSpec
@@ -54,20 +54,20 @@ type formEpisode struct {
 
 // formEpisodes defines a longer one-way arc with recognizable returns and new motif angles instead of copying the first pass.
 var formEpisodes = [...]formEpisode{
-	{"A", 0, 0.72, 0, 0},
-	{"A'", 1, 0.88, 0, 0},
-	{"B", 2, 1.00, 0, 0},
-	{"Interlude", 3, 0.42, 0, 0},
-	{"Retour", 4, 0.92, 0, 0},
+	{"Thème", 0, 0.78, 0, 0},
+	{"Variation I", 1, 0.88, 0, 0},
+	{"Expansion", 2, 1.00, 0, 0},
+	{"Passage", 3, 0.70, 0, 0},
+	{"Variation II", 4, 0.92, 0, 0},
 	{"Développement", 1, 0.86, 1, 1},
-	{"B'", 2, 0.96, -2, 1},
-	{"Respiration", 3, 0.38, -4, 1},
+	{"Expansion II", 2, 0.96, -2, 1},
+	{"Passage II", 3, 0.68, -4, 1},
 	{"Reprise", 4, 0.90, 0, 1},
 	{"Climax", 2, 1.00, 2, 2},
-	{"Transition", 3, 0.50, -3, 2},
+	{"Transition", 3, 0.72, -3, 2},
 	{"Dernier retour", 4, 0.84, -1, 0},
 	{"Écho", 0, 0.66, -2, 2},
-	{"Suspension", 3, 0.28, -5, 0},
+	{"Poursuite", 3, 0.66, -5, 0},
 	{"Dénouement", 5, 0.58, -3, 1},
 	{"Conclusion", 5, 0.43, -5, 0},
 }
@@ -113,7 +113,7 @@ var musicalStyles = map[string]musicalCharacter{
 		tempoArc:     [6]int{},
 		scale:        []int{0, 2, 3, 5, 7, 8, 10},
 		progression:  [4]chordSpec{{0, 3}, {8, 4}, {5, 3}, {7, 4}},
-		answer:       [4]chordSpec{{0, 3}, {5, 3}, {7, 4}, {0, 3}},
+		variation:    [4]chordSpec{{0, 3}, {5, 3}, {7, 4}, {0, 3}},
 		bridge:       [4]chordSpec{{3, 4}, {8, 4}, {2, 4}, {7, 4}},
 		bridgeReturn: [4]chordSpec{{8, 4}, {5, 3}, {2, 4}, {7, 4}},
 		climax:       [4]chordSpec{{0, 3}, {8, 4}, {2, 4}, {7, 4}},
@@ -124,7 +124,7 @@ var musicalStyles = map[string]musicalCharacter{
 		tempoArc:     [6]int{0, 3, 6, -5, 4, -3},
 		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {9, 3}, {5, 4}, {7, 4}},
-		answer:       [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {0, 4}},
+		variation:    [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {0, 4}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {2, 4}, {7, 4}},
 		bridgeReturn: [4]chordSpec{{5, 4}, {2, 3}, {2, 4}, {7, 4}},
 		climax:       [4]chordSpec{{0, 4}, {9, 3}, {2, 4}, {7, 4}},
@@ -139,7 +139,7 @@ var musicalStyles = map[string]musicalCharacter{
 		tempoArc:     [6]int{0, 4, 9, -7, 6, -4},
 		scale:        []int{0, 2, 3, 5, 7, 8, 10},
 		progression:  [4]chordSpec{{0, 3}, {8, 4}, {10, 4}, {7, 4}},
-		answer:       [4]chordSpec{{0, 3}, {5, 3}, {7, 4}, {0, 3}},
+		variation:    [4]chordSpec{{0, 3}, {5, 3}, {7, 4}, {0, 3}},
 		bridge:       [4]chordSpec{{5, 3}, {8, 4}, {2, 4}, {7, 4}},
 		bridgeReturn: [4]chordSpec{{8, 4}, {5, 3}, {2, 4}, {7, 4}},
 		climax:       [4]chordSpec{{0, 3}, {8, 4}, {2, 4}, {7, 4}},
@@ -153,7 +153,7 @@ var musicalStyles = map[string]musicalCharacter{
 		tempoArc:     [6]int{0, 5, 10, -6, 7, -2},
 		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {9, 3}},
-		answer:       [4]chordSpec{{0, 4}, {2, 3}, {7, 4}, {0, 4}},
+		variation:    [4]chordSpec{{0, 4}, {2, 3}, {7, 4}, {0, 4}},
 		bridge:       [4]chordSpec{{9, 3}, {5, 4}, {2, 4}, {7, 4}},
 		bridgeReturn: [4]chordSpec{{5, 4}, {9, 3}, {2, 4}, {7, 4}},
 		climax:       [4]chordSpec{{0, 4}, {5, 4}, {2, 4}, {7, 4}},
@@ -167,7 +167,7 @@ var musicalStyles = map[string]musicalCharacter{
 		tempoArc:     [6]int{0, 3, 7, -5, 5, -3},
 		scale:        []int{0, 2, 3, 5, 7, 9, 10},
 		progression:  [4]chordSpec{{0, 3}, {5, 4}, {10, 4}, {0, 3}},
-		answer:       [4]chordSpec{{0, 3}, {10, 4}, {7, 4}, {0, 3}},
+		variation:    [4]chordSpec{{0, 3}, {10, 4}, {7, 4}, {0, 3}},
 		bridge:       [4]chordSpec{{10, 4}, {5, 4}, {2, 4}, {7, 4}},
 		bridgeReturn: [4]chordSpec{{5, 4}, {10, 4}, {2, 4}, {7, 4}},
 		climax:       [4]chordSpec{{0, 3}, {5, 4}, {2, 4}, {7, 4}},

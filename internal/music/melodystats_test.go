@@ -24,8 +24,8 @@ func upperMelody(plan MusicPlan) []MusicNote {
 	return notes
 }
 
-// TestPianoMelodyFormsQuestionAndAnswer checks that the opening has a moving lead and a half cadence answered by a tonic cadence.
-func TestPianoMelodyFormsQuestionAndAnswer(t *testing.T) {
+// TestPianoThemeContinuesIntoVariation checks that the opening develops without a fixed half-cadence and tonic answer.
+func TestPianoThemeContinuesIntoVariation(t *testing.T) {
 	for _, scene := range []string{"A serene pond with water lilies.", "A threatening storm.", "A lively dancing scene."} {
 		for center := byte(0); center < 12; center++ {
 			var digest [32]byte
@@ -56,21 +56,20 @@ func TestPianoMelodyFormsQuestionAndAnswer(t *testing.T) {
 			if len(pitchCounts) < 7 || mostRepeated*3 > len(opening) {
 				t.Fatalf("%q center %d repeats one pitch too often: %d pitches, %d/%d on the most common note", scene, center, len(pitchCounts), mostRepeated, len(opening))
 			}
-			var question, firstAnswer, answer *MusicNote
+			var themeLast, variationFirst *MusicNote
 			for index := range opening {
 				note := &opening[index]
 				if note.Beat < 16 {
-					question = note
+					themeLast = note
 				} else {
-					if firstAnswer == nil {
-						firstAnswer = note
+					if variationFirst == nil {
+						variationFirst = note
 					}
-					answer = note
 				}
 			}
 			root := 48 + int(center)
-			if question == nil || firstAnswer == nil || answer == nil || question.MIDI%12 != (root+11)%12 || firstAnswer.MIDI%12 != root%12 || answer.MIDI%12 != root%12 {
-				t.Fatalf("%q center %d lacks a resolved question-and-answer period: %v / %v / %v", scene, center, question, firstAnswer, answer)
+			if themeLast == nil || variationFirst == nil || themeLast.MIDI%12 == (root+11)%12 || variationFirst.MIDI%12 == root%12 {
+				t.Fatalf("%q center %d still uses a fixed question-and-answer cadence: %v / %v", scene, center, themeLast, variationFirst)
 			}
 		}
 	}

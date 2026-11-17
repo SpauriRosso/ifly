@@ -652,14 +652,14 @@ func TestPhraseDynamicsBreathe(t *testing.T) {
 	}
 }
 
-// TestMusicFormBreaksAndReturns checks that the interlude makes space before the returning theme regains its pulse.
+// TestMusicFormBreaksAndReturns checks that the theme develops through named passages without percussion or a silent section.
 func TestMusicFormBreaksAndReturns(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A lively dancing scene."}, [32]byte{})
-	if plan.Sections[3].Label != "Interlude" || plan.Sections[4].Label != "Retour" {
+	if plan.Sections[0].Label != "Thème" || plan.Sections[1].Label != "Variation I" || plan.Sections[3].Label != "Passage" {
 		t.Fatalf("missing form contrast: %+v", plan.Sections)
 	}
-	if countVoiceInSection(plan, "pulse", 0, float64(plan.BeatsPerLoop)) != 0 || countVoiceInSection(plan, "lead", 48, 64) >= countVoiceInSection(plan, "lead", 64, 80) {
-		t.Fatal("the interlude and return do not contrast")
+	if countVoiceInSection(plan, "pulse", 0, float64(plan.BeatsPerLoop)) != 0 || countVoiceInSection(plan, "lead", 48, 64) == 0 {
+		t.Fatal("the transition contains no piano writing")
 	}
 	if len(plan.Notes) > 1200 {
 		t.Fatalf("score exceeds the player event limit: %d", len(plan.Notes))

@@ -10,7 +10,7 @@ func harmonyForBar(character musicalCharacter, bar, section, finalBar int) chord
 	position := bar % 4
 	chord := character.progression[position]
 	if section == 1 {
-		chord = character.answer[position]
+		chord = character.variation[position]
 	} else if section == 2 {
 		switch bar / 4 {
 		case 6:
