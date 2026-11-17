@@ -737,7 +737,7 @@ func TestExpressNotesPreservesAnchors(t *testing.T) {
 		digest[index] = 255
 	}
 	expressNotes(notes, digest, 92)
-	if notes[0].Beat != 0 || notes[0].Velocity != 0.3 || notes[1].Beat <= 0 || notes[2].Beat >= 4 || notes[3].Beat != 92 {
+	if notes[0].Beat != 0 || notes[0].Velocity != 0.3 || notes[1].Beat != 0 || notes[2].Beat >= 4 || notes[3].Beat != 92 {
 		t.Fatalf("expression moved an anchor or crossed a bar: %+v", notes)
 	}
 }
