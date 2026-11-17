@@ -90,7 +90,7 @@ func pianoPhraseEvents(episodeIndex, root, finalBar int, complexity float64, dig
 	}
 	for index := range events {
 		contourIndex := index * len(contour) / len(events)
-		degree := int(digest[1]%3) + contour[contourIndex] + episode.motifTurn
+		degree := int(digest[1]%3) + developedPianoDegree(contour, contourIndex, episodeIndex, events[index].bar%4) + episode.motifTurn
 		if contourIndex%4 == 2 || contourIndex%4 == 3 {
 			degree += int(digest[2+contourIndex/4]%3) - 1
 		}

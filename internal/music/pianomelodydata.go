@@ -36,6 +36,20 @@ var pianoQuestionContour = [16]int{0, 1, 3, 2, 1, 2, 0, 1, 2, 4, 5, 3, 2, 1, 0, 
 var pianoVariationContour = [16]int{0, 2, 3, 1, 2, 4, 3, 1, 3, 2, 5, 4, 3, 1, 0, 1}
 var pianoAnswerContour = [16]int{3, 4, 2, 5, 4, 2, 1, 3, 5, 4, 2, 3, 2, 1, 0, 1}
 
+type pianoContourDevelopment struct {
+	invert      bool
+	retrograde  bool
+	barSequence [4]int
+}
+
+// pianoContourDevelopments transforms the existing motives at major formal returns instead of introducing unrelated note patterns.
+var pianoContourDevelopments = map[int]pianoContourDevelopment{
+	5:  {invert: true, barSequence: [4]int{0, 0, 1, 0}},
+	6:  {retrograde: true, barSequence: [4]int{0, 1, 0, 0}},
+	9:  {barSequence: [4]int{0, 1, 1, 2}},
+	12: {invert: true, barSequence: [4]int{0, -1, -1, 0}},
+}
+
 var pianoMelodyCosts = struct {
 	target   float64
 	motion   float64
