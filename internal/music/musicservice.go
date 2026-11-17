@@ -42,13 +42,18 @@ type MusicPlan struct {
 
 type MusicService struct{}
 
-// scoreDigestFromImageDigest takes a SHA-256 image digest and returns all musical choices derived from its displayed eight-byte seed.
+// scoreDigestFromImageDigest takes an image digest and returns a score digest derived only from its displayed eight-byte seed.
 func scoreDigestFromImageDigest(imageDigest [32]byte) [32]byte {
 	return sha256.Sum256(imageDigest[:8])
 }
 
-// Compose validates a bounded image and model result, then returns a deterministic score tied to the image bytes.
+// Compose takes an image and model result, then returns the deterministic score for its default seed and inferred theme.
 func (s *MusicService) Compose(dataURL string, interpretation semantic.SemanticAnalysis) (MusicPlan, error) {
+	return s.ComposeVariant(dataURL, interpretation, "", "")
+}
+
+// ComposeVariant takes an image, model result, optional 16-digit hex seed, and optional theme, then returns a repeatable piano score.
+func (s *MusicService) ComposeVariant(dataURL string, interpretation semantic.SemanticAnalysis, seed, theme string) (MusicPlan, error) {
 	image, err := analysis.DecodeImage(dataURL)
 	if err != nil {
 		return MusicPlan{}, err
@@ -61,8 +66,27 @@ func (s *MusicService) Compose(dataURL string, interpretation semantic.SemanticA
 			return MusicPlan{}, errors.New("invalid semantic subject")
 		}
 	}
-	digest := sha256.Sum256([]byte(dataURL))
-	plan := composeMusic(analysis.MeasureImage(image), interpretation, scoreDigestFromImageDigest(digest))
-	plan.Seed = hex.EncodeToString(digest[:8])
+	if theme != "" && theme != "auto" {
+		if _, ok := musicalStyles[theme]; !ok {
+			return MusicPlan{}, errors.New("invalid musical theme")
+		}
+	}
+	imageDigest := sha256.Sum256([]byte(dataURL))
+	seedBytes := imageDigest[:8]
+	if seed != "" {
+		if len(seed) != 16 {
+			return MusicPlan{}, errors.New("seed must contain 16 hexadecimal digits")
+		}
+		seedBytes, err = hex.DecodeString(seed)
+		if err != nil {
+			return MusicPlan{}, errors.New("seed must contain 16 hexadecimal digits")
+		}
+	}
+	character := selectMusicalCharacter(interpretation)
+	if theme != "" && theme != "auto" {
+		character = musicalStyles[theme]
+	}
+	plan := composeMusicForCharacter(analysis.MeasureImage(image), interpretation, sha256.Sum256(seedBytes), character)
+	plan.Seed = hex.EncodeToString(seedBytes)
 	return plan, nil
 }

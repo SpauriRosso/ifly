@@ -56,7 +56,11 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 
 // composeMusic takes measured structure, tentative semantics, and an image digest and returns a long-form score with related episodes.
 func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic.SemanticAnalysis, digest [32]byte) MusicPlan {
-	character := selectMusicalCharacter(interpretation)
+	return composeMusicForCharacter(structure, interpretation, digest, selectMusicalCharacter(interpretation))
+}
+
+// composeMusicForCharacter takes measured structure, scene meaning, a score seed, and a chosen theme, then returns their deterministic score.
+func composeMusicForCharacter(structure analysis.StructuralAnalysis, interpretation semantic.SemanticAnalysis, digest [32]byte, character musicalCharacter) MusicPlan {
 	if character.pianoLead {
 		character = choosePianoPalette(character, digest)
 	}
