@@ -41,10 +41,11 @@ func planPianoMeasures(root, finalBar int, sections []MusicSection, digest [32]b
 			voicing: voicing,
 			energy:  phraseEnergy(sections[bar/4].Energy*phraseDynamics[role][bar%4], bar, digest),
 		}
-		if bar%4 == 2 && bar < finalBar && role != 3 && role != 5 {
+		if bar%4 < 3 && bar < finalBar && pianoAppliedApproaches[bar/4][bar%4] {
 			next := harmonyForBar(character, bar+1, role, finalBar)
-			if next.rootOffset == 7 && chord.rootOffset != 7 {
-				approach := chordSpec{rootOffset: 2, third: 4}
+			approachRoot := (next.rootOffset + 7) % 12
+			if approachRoot != chord.rootOffset {
+				approach := chordSpec{rootOffset: approachRoot, third: 4}
 				measure.lateChord = &approach
 				measure.lateVoicing = voiceChord(root+approach.rootOffset, approach.third, voicing, true)
 			}

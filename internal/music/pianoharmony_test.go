@@ -21,12 +21,13 @@ func TestPianoUsesSecondaryDominantApproaches(t *testing.T) {
 				continue
 			}
 			approaches++
-			if measure.lateChord.rootOffset != 2 || measures[bar+1].chord.rootOffset != 7 {
-				t.Fatalf("%q lacks the secondary-dominant to dominant motion in bar %d", scene, bar)
+			if (measures[bar+1].chord.rootOffset-measure.lateChord.rootOffset+12)%12 != 5 || measure.lateChord.third != 4 {
+				t.Fatalf("%q lacks the applied-dominant resolution in bar %d", scene, bar)
 			}
 			bassFound := false
+			approachBass := pianoBassRegister(48 + measure.lateChord.rootOffset - 12)
 			for _, note := range plan.Notes {
-				if note.Voice == "bass" && note.Beat == float64(bar*4+2) && note.MIDI == 38 {
+				if note.Voice == "bass" && note.Beat == float64(bar*4+2) && note.MIDI == approachBass {
 					bassFound = true
 					break
 				}

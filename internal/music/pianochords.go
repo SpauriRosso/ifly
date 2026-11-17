@@ -1,5 +1,16 @@
 package music
 
+// pianoInnerRegister takes a chord pitch and returns its nearest inner-staff octave between MIDI 55 and 66.
+func pianoInnerRegister(pitch int) int {
+	for pitch > 66 {
+		pitch -= 12
+	}
+	for pitch < 55 {
+		pitch += 12
+	}
+	return pitch
+}
+
 // pianoInnerVoices takes a voiced measure and final-bar marker, then returns short inner chord attacks that support each phrase.
 func pianoInnerVoices(measure pianoMeasure, finalBar int, character musicalCharacter) []MusicNote {
 	position := measure.bar % 4
@@ -24,6 +35,8 @@ func pianoInnerVoices(measure pianoMeasure, finalBar int, character musicalChara
 		for voice := 0; voice < 2; voice++ {
 			notes = append(notes, MusicNote{Beat: start + 2, Duration: 1.1, MIDI: measure.lateVoicing[voice], Velocity: 0.28 * measure.energy, Voice: "pad"})
 		}
+		seventh := pianoInnerRegister(measure.chordRoot - measure.chord.rootOffset + measure.lateChord.rootOffset + 10)
+		notes = append(notes, MusicNote{Beat: start + 2, Duration: 0.95, MIDI: seventh, Velocity: 0.19 * measure.energy, Voice: "pad"})
 	} else if (measure.role == 2 || measure.role == 4) && position == 1 {
 		notes = append(notes, MusicNote{Beat: start + 2.5, Duration: 0.7, MIDI: measure.voicing[1], Velocity: 0.22 * measure.energy, Voice: "pad"})
 	}
