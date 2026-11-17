@@ -57,6 +57,22 @@ var pianoGestures = map[pianoTexture][4]pianoGesture{
 	},
 }
 
+// pianoEpisodeGestures develops the left hand in the later bridge and climax while keeping every tone tied to the active chord.
+var pianoEpisodeGestures = map[int][4]pianoGesture{
+	6: {
+		{[]float64{0.75, 1.5, 2.25, 3.25}, []int{0, 1, 2, 1}},
+		{[]float64{0.5, 1.25, 2, 2.75, 3.5}, []int{2, 1, 0, 1, 2}},
+		{[]float64{0.75, 1.5, 2.25, 3.25}, []int{0, 2, 1, 0}},
+		{[]float64{1, 2, 3.25}, []int{2, 1, 0}},
+	},
+	9: {
+		{[]float64{0.5, 1, 1.5, 2.25, 2.75, 3.5}, []int{0, 1, 2, 1, 0, 2}},
+		{[]float64{0.5, 1.25, 1.75, 2.5, 3.25}, []int{2, 1, 0, 1, 2}},
+		{[]float64{0.5, 1, 1.5, 2, 2.5, 3.25}, []int{0, 2, 1, 2, 0, 1}},
+		{[]float64{1, 1.75, 2.5, 3.25}, []int{2, 1, 0, 1}},
+	},
+}
+
 // pianoChordDurations and pianoChordVoices pace inner chord attacks instead of sustaining every inversion across the bar.
 var pianoChordDurations = [6][4]float64{
 	{1.5, 0.75, 1.2, 0.65},

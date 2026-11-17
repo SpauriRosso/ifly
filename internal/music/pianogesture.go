@@ -7,6 +7,9 @@ func pianoLeftHandGesture(measure pianoMeasure, lead []MusicNote, finalBar int, 
 	}
 	texture := pianoTextures[character.mood][measure.role]
 	gesture := pianoGestures[texture][measure.bar%4]
+	if developed, ok := pianoEpisodeGestures[measure.bar/4]; ok {
+		gesture = developed[measure.bar%4]
+	}
 	ascendingLead := len(lead) >= 2 && lead[len(lead)-1].MIDI > lead[0].MIDI
 	notes := make([]MusicNote, 0, len(gesture.beats))
 	for index, beat := range gesture.beats {
