@@ -88,21 +88,11 @@ func TestSadSceneSelectsMelancholy(t *testing.T) {
 	}
 }
 
-// TestCalmPaletteMovesThroughRelativeMinor checks that gentle scenes use a four-chord path and a few added ninths at phrase arrivals.
+// TestCalmPaletteMovesThroughRelativeMinor checks that gentle scenes use a four-chord tonal path.
 func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
 	character := musicalStyles["calm"]
 	if character.progression[0].rootOffset != 0 || character.progression[1].rootOffset != 9 || character.progression[2].rootOffset != 5 || character.progression[3].rootOffset != 7 || character.bridge[2].rootOffset != 2 {
 		t.Fatalf("gentle harmony lacks its tonic, relative minor, subdominant, and dominant path: %+v %+v", character.progression, character.bridge)
-	}
-	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
-	colorNotes := 0
-	for _, note := range plan.Notes {
-		if note.Voice == "pad" && note.Beat-float64(int(note.Beat)) == 0.25 {
-			colorNotes++
-		}
-	}
-	if colorNotes < 4 {
-		t.Fatalf("gentle accompaniment lacks spaced color notes: %d", colorNotes)
 	}
 }
 
@@ -365,21 +355,19 @@ func TestVoiceChordPrefersNearInversion(t *testing.T) {
 	}
 }
 
-// TestArpeggioBuildsAndRecedes checks that quiet piano accompaniment develops after a sparse opening and withdraws before the final cadence.
-func TestArpeggioBuildsAndRecedes(t *testing.T) {
-	calm := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
-	tense := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
-	opening := countVoiceInSection(calm, "arp", 0, 16)
-	bridge := countVoiceInSection(calm, "arp", 32, 48)
-	if opening == 0 || bridge <= opening || countVoiceInSection(calm, "arp", 48, 64) >= opening || countVoiceInSection(calm, "arp", float64(calm.BeatsPerLoop-8), float64(calm.BeatsPerLoop)) != 0 {
-		t.Fatal("the calm counterline did not follow the phrase arc")
-	}
-	if countVoiceInSection(tense, "arp", 32, 48) <= countVoiceInSection(tense, "arp", 0, 16) {
-		t.Fatal("the tense bridge should develop beyond its opening")
+// TestSoloPianoHasNoBackgroundParts checks that a score contains only the upper piano notes and its harmonic bass arrivals.
+func TestSoloPianoHasNoBackgroundParts(t *testing.T) {
+	for _, description := range []string{"A serene landscape.", "A threatening scene.", "A lively dancing scene."} {
+		plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: description}, [32]byte{})
+		for _, note := range plan.Notes {
+			if note.Voice != "lead" && note.Voice != "bass" {
+				t.Fatalf("%q retains a separate background part: %+v", description, note)
+			}
+		}
 	}
 }
 
-// TestPianoLeftHandStaysBelowMelody checks that broken-chord piano responses occupy a lower register than the lead.
+// TestPianoLeftHandStaysBelowMelody checks that the piano's harmonic roots remain below its upper notes.
 func TestPianoLeftHandStaysBelowMelody(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
 	left, right := 0, 0
@@ -387,10 +375,10 @@ func TestPianoLeftHandStaysBelowMelody(t *testing.T) {
 		if note.Beat >= 16 {
 			continue
 		}
-		if note.Voice == "arp" {
+		if note.Voice == "bass" {
 			left++
-			if note.MIDI < 44 || note.MIDI >= 67 {
-				t.Fatalf("left-hand response overlaps the melody register: %+v", note)
+			if note.MIDI < 36 || note.MIDI > 50 {
+				t.Fatalf("low piano note overlaps the upper register: %+v", note)
 			}
 		}
 		if note.Voice == "lead" {
@@ -430,22 +418,6 @@ func TestPianoScoreFitsPlayer(t *testing.T) {
 	}
 }
 
-// TestCounterlineAnswersLead checks that aligned piano-hand attacks stay in separate registers.
-func TestCounterlineAnswersLead(t *testing.T) {
-	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
-	for _, counterline := range plan.Notes {
-		if counterline.Voice != "arp" {
-			continue
-		}
-		bar := int(counterline.Beat / 4)
-		for _, lead := range plan.Notes {
-			if lead.Voice == "lead" && int(lead.Beat/4) == bar && math.Abs(lead.Beat-counterline.Beat) < 0.3 && counterline.MIDI > lead.MIDI-7 {
-				t.Fatalf("left hand overlaps a simultaneous melody attack in bar %d: %+v %+v", bar, lead, counterline)
-			}
-		}
-	}
-}
-
 // TestBassLineChangesItsResponse checks that an active bass voice uses different chord tones and the calm bridge adds movement.
 func TestBassLineChangesItsResponse(t *testing.T) {
 	character := musicalStyles["energetic"]
@@ -464,25 +436,6 @@ func TestBassLineChangesItsResponse(t *testing.T) {
 	calm := musicalStyles["calm"]
 	if len(bassNotes(0, 0, 0, 23, 48, 4, 1, calm)) != 1 || len(bassNotes(36, 9, 2, 23, 53, 4, 1, calm)) != 2 {
 		t.Fatal("calm bass did not develop between opening and bridge")
-	}
-}
-
-// TestCounterlineUsesItsOwnRangeAndOnsets checks that the middle instrument answers between bass and lead while the opening leaves space.
-func TestCounterlineUsesItsOwnRangeAndOnsets(t *testing.T) {
-	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
-	totals := map[string]int{}
-	counts := map[string]int{}
-	for _, note := range plan.Notes {
-		if note.Beat < 32 || note.Beat >= 48 {
-			continue
-		}
-		if note.Voice == "bass" || note.Voice == "arp" || note.Voice == "lead" {
-			totals[note.Voice] += note.MIDI
-			counts[note.Voice]++
-		}
-	}
-	if counts["bass"] == 0 || counts["arp"] == 0 || counts["lead"] == 0 || totals["bass"]/counts["bass"] >= totals["arp"]/counts["arp"] || totals["arp"]/counts["arp"] >= totals["lead"]/counts["lead"] {
-		t.Fatalf("instrumental ranges collapsed together: totals=%v counts=%v", totals, counts)
 	}
 }
 
@@ -681,27 +634,21 @@ func TestPhraseRhythmDevelopsAndReturns(t *testing.T) {
 	}
 }
 
-// TestPhraseDynamicsBreathe checks that the accompaniment grows inside a phrase and releases before its cadence.
+// TestPhraseDynamicsBreathe checks that the solo piano grows inside a phrase and softens at the ending.
 func TestPhraseDynamicsBreathe(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: "A serene landscape."}, [32]byte{})
-	pads := map[int]MusicNote{}
+	totals := map[int]float64{}
+	counts := map[int]int{}
 	for _, note := range plan.Notes {
-		if note.Voice == "pad" && note.Beat == float64(int(note.Beat)) {
+		if note.Voice == "lead" {
 			bar := int(note.Beat) / 4
-			if _, exists := pads[bar]; !exists {
-				pads[bar] = note
-			}
+			totals[bar] += note.Velocity
+			counts[bar]++
 		}
 	}
-	if pads[2].Velocity <= pads[0].Velocity || pads[3].Velocity >= pads[2].Velocity {
-		t.Fatalf("opening phrase has no intensity arc: %+v %+v %+v", pads[0], pads[2], pads[3])
-	}
-	if pads[1].Duration >= pads[0].Duration || pads[3].Duration >= pads[0].Duration {
-		t.Fatalf("accompaniment does not leave phrase space: %+v %+v %+v %+v", pads[0], pads[1], pads[2], pads[3])
-	}
 	lastBar := plan.BeatsPerLoop/4 - 1
-	if pads[lastBar].Velocity >= pads[lastBar-3].Velocity {
-		t.Fatalf("ending does not fade: %+v %+v", pads[lastBar-3], pads[lastBar])
+	if counts[2] == 0 || counts[0] == 0 || counts[lastBar] == 0 || totals[2]/float64(counts[2]) <= totals[0]/float64(counts[0]) || totals[lastBar]/float64(counts[lastBar]) >= totals[lastBar-3]/float64(counts[lastBar-3]) {
+		t.Fatalf("solo piano lacks an intensity arc: totals=%v counts=%v", totals, counts)
 	}
 }
 
