@@ -262,16 +262,13 @@ func TestComposeMusicUsesVisualComplexity(t *testing.T) {
 	}
 }
 
-// TestComposeMusicVariesTempo checks that the bridge accelerates and the conclusion settles for contrasting scenes.
-func TestComposeMusicVariesTempo(t *testing.T) {
+// TestPianoTempoStaysSteady checks that formal transitions do not introduce an unexplained slowdown.
+func TestPianoTempoStaysSteady(t *testing.T) {
 	for _, description := range []string{"A serene landscape.", "A threatening scene.", "A lively dancing scene."} {
 		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.6}, semantic.SemanticAnalysis{Description: description}, [32]byte{})
-		if plan.Sections[0].TempoBPM != plan.TempoBPM || plan.Sections[2].TempoBPM <= plan.Sections[0].TempoBPM || plan.Sections[3].TempoBPM >= plan.Sections[2].TempoBPM || plan.Sections[4].TempoBPM <= plan.Sections[3].TempoBPM || plan.Sections[len(plan.Sections)-1].TempoBPM >= plan.Sections[9].TempoBPM {
-			t.Fatalf("tempo arc did not develop for %q: %+v", description, plan.Sections)
-		}
 		for _, section := range plan.Sections {
-			if section.TempoBPM < 40 || section.TempoBPM > 180 {
-				t.Fatalf("tempo outside playable range: %+v", section)
+			if section.TempoBPM != plan.TempoBPM {
+				t.Fatalf("%q changes tempo at an unrelated section: %+v", description, section)
 			}
 		}
 	}

@@ -58,9 +58,13 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	bridgeMotif := makeBridgeMotif(digest, len(character.scale))
 	sections := make([]MusicSection, 0, len(formEpisodes))
 	for index, episode := range formEpisodes {
+		sectionTempo := tempo + character.tempoArc[episode.role] + episode.tempoShift
+		if character.pianoLead {
+			sectionTempo = tempo
+		}
 		sections = append(sections, MusicSection{
 			Label: episode.label, StartBeat: float64(index * 16), EndBeat: float64((index + 1) * 16),
-			Energy: episode.energy, TempoBPM: tempo + character.tempoArc[episode.role] + episode.tempoShift,
+			Energy: episode.energy, TempoBPM: sectionTempo,
 		})
 	}
 	notes := make([]MusicNote, 0, 700)
