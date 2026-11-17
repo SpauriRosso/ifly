@@ -66,11 +66,7 @@ func composePianoScore(root, finalBar int, complexity float64, sections []MusicS
 		if measure.bar != finalBar {
 			notes = append(notes, pianoCadentialSeventh(start, measure.bar, measure.role, measure.chordRoot, measure.chord, measure.energy)...)
 		}
-		bass := bassNotes(start, measure.bar, measure.role, finalBar, measure.chordRoot, measure.chord.third, measure.energy, character)
-		if measure.lateChord != nil {
-			bass = []MusicNote{bass[0], {Beat: start + 2, Duration: 1.55, MIDI: root + measure.lateChord.rootOffset - 12, Velocity: 0.48 * measure.energy, Voice: "bass"}}
-		}
-		notes = append(notes, bass...)
+		notes = append(notes, pianoBassLine(measure, finalBar, character)...)
 		lead := melody[measure.bar]
 		notes = append(notes, lead...)
 		notes = append(notes, pianoRightHandDoubling(lead, measure.chordRoot, measure.chord.third, measure.bar, measure.role)...)

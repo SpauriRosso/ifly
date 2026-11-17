@@ -75,3 +75,11 @@ var pianoChordVoices = [6][4]int{
 	{2, 2, 2, 2},
 	{2, 1, 1, 3},
 }
+
+// pianoBassResponses places optional fifths in the bass according to the scene and phrase role; zero leaves the bar open.
+var pianoBassResponses = map[string][6]float64{
+	"calm":      {0, 0, 2.5, 0, 2.5, 0},
+	"tense":     {2, 2.5, 2.5, 0, 2.5, 0},
+	"energetic": {2, 2.5, 2.5, 0, 2.5, 0},
+	"neutral":   {0, 2.5, 2.5, 0, 2.5, 0},
+}
