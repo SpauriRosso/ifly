@@ -38,6 +38,8 @@ bin/
 debug.log
 frontend/node_modules/
 frontend/dist/
+build/windows/icon.ico
+build/windows/ifly.icns
 
 # Unused Wails template files and local migration backups
 frontend/public/*
