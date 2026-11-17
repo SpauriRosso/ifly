@@ -58,7 +58,7 @@ func composePianoScore(root, finalBar int, complexity float64, sections []MusicS
 		lead := melody[measure.bar]
 		notes = append(notes, lead...)
 		notes = append(notes, pianoRightHandDoubling(lead, measure.chordRoot, measure.chord.third, measure.bar, measure.role)...)
-		notes = append(notes, pianoLeftHandNotes(start, measure.bar, measure.role, finalBar, measure.voicing, measure.energy, character)...)
+		notes = append(notes, pianoLeftHandGesture(measure, lead, finalBar, character)...)
 	}
 	return notes
 }
