@@ -7,7 +7,8 @@ import { ImageData, loadImage } from './imageImport'
 import { analyzePreview } from './structuralAnalysis'
 import { createEdgePreview } from './edgePreview'
 import { cancelInterpretation, interpretPreview } from './semanticAnalysis'
-import { composePreview } from './musicPreview'
+import { composePreview, composeVariant, createMusicSeed } from './musicPreview'
+import { THEME_LABELS, THEME_OPTIONS } from './musicThemeData'
 import { MusicPlayer } from './musicPlayer'
 import { INSTRUMENT_LABELS } from './musicInstruments'
 import { TIMBRES } from './musicTimbres'
@@ -15,7 +16,6 @@ import { createTempoMap } from './musicTiming'
 import brandMark from './assets/ifly-brand.png'
 import './app.css'
 
-const THEME_LABELS: Record<string, string> = { calm: 'Contemplatif', tense: 'Dramatique', energetic: 'Joyeux', melancholy: 'Mélancolique', neutral: 'Introspectif' }
 const MODE_LABELS: Record<string, string> = { pentatonic: 'pentatonique', minor: 'mineur', major: 'majeur', dorian: 'dorien', lydian: 'lydien', mixolydian: 'mixolydien', phrygian: 'phrygien', 'harmonic-minor': 'mineur harmonique' }
 const TIMBRE_LABELS: Record<string, string> = { warm: 'chaleureux', dark: 'sombre', bright: 'clair', soft: 'doux' }
 
@@ -44,6 +44,8 @@ function App() {
   const [semantic, setSemantic] = useState<SemanticAnalysis | null>(null)
   const [semanticError, setSemanticError] = useState('')
   const [musicPlan, setMusicPlan] = useState<MusicPlan | null>(null)
+  const [selectedTheme, setSelectedTheme] = useState('auto')
+  const [selectedSeed, setSelectedSeed] = useState('')
   const [musicError, setMusicError] = useState('')
   const [playback, setPlayback] = useState<'stopped' | 'playing' | 'paused'>('stopped')
   const [audioLoading, setAudioLoading] = useState(false)
@@ -68,6 +70,8 @@ function App() {
     setPlayback('stopped')
     setAudioLoading(false)
     setMusicPlan(null)
+    setSelectedTheme('auto')
+    setSelectedSeed('')
     setMusicError('')
   }
 
@@ -150,7 +154,10 @@ function App() {
       setBusy('music')
       try {
         const plan = await composePreview(imageRef.current.url, result)
-        if (current === generation.current) setMusicPlan(plan)
+        if (current === generation.current) {
+          setMusicPlan(plan)
+          setSelectedSeed(plan.seed)
+        }
       } catch (cause) {
         if (current === generation.current) setMusicError(cause instanceof Error ? cause.message : 'Plan musical indisponible.')
       }
@@ -161,6 +168,27 @@ function App() {
           ? 'Modèle local indisponible. Exécutez scripts/setup-local-vlm.ps1 une fois, puis relancez IFLY. Les mesures visuelles restent utilisables.'
           : 'Interprétation locale impossible. Vérifiez le modèle et réessayez.')
       }
+    } finally {
+      if (current === generation.current) setBusy(null)
+    }
+  }
+
+  // regeneratePiano takes the selected theme and seed, stops playback, and replaces the current score for the same artwork.
+  async function regeneratePiano(seed = selectedSeed) {
+    if (!imageRef.current || !semantic || busy) return
+    const current = generation.current
+    playerRef.current?.stop()
+    setPlayback('stopped')
+    setAudioLoading(false)
+    setBusy('music')
+    setMusicError('')
+    try {
+      const plan = await composeVariant(imageRef.current.url, semantic, seed.trim(), selectedTheme)
+      if (current !== generation.current) return
+      setMusicPlan(plan)
+      setSelectedSeed(plan.seed)
+    } catch (cause) {
+      if (current === generation.current) setMusicError(cause instanceof Error ? cause.message : 'Impossible de composer cette variante.')
     } finally {
       if (current === generation.current) setBusy(null)
     }
@@ -300,8 +328,19 @@ function App() {
           <p className="semantic-description">Thème {THEME_LABELS[musicPlan.mood] ?? 'Introspectif'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
           <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
           <p className="semantic-description">Instrument : {describeMainInstrument(musicPlan)}</p>
-          <p className="hint">Seed : {musicPlan.seed}</p>
-          <p className="analysis-note">Le seed relie cette partition à l’image. La pièce se termine après sa conclusion.</p>
+          <div className="music-controls">
+            <label htmlFor="music-theme">Thème</label>
+            <select id="music-theme" value={selectedTheme} onChange={event => setSelectedTheme(event.target.value)} disabled={busy !== null}>
+              {THEME_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <label htmlFor="music-seed">Seed · 16 caractères hexadécimaux</label>
+            <input id="music-seed" value={selectedSeed} onChange={event => setSelectedSeed(event.target.value)} maxLength={16} spellCheck={false} autoComplete="off" disabled={busy !== null} />
+            <div className="music-control-actions">
+              <button className="button" onClick={() => void regeneratePiano(createMusicSeed())} disabled={busy !== null}>Autre seed</button>
+              <button className="button primary" onClick={() => void regeneratePiano()} disabled={busy !== null || !/^[a-fA-F0-9]{16}$/.test(selectedSeed.trim())}>{busy === 'music' ? 'Composition…' : 'Composer'}</button>
+            </div>
+          </div>
+          <p className="analysis-note">Même seed et même thème : même partition. La pièce se termine après sa conclusion.</p>
         </> : <p className="hint">La musique est préparée après l’interprétation.</p>}
         {musicError && <p className="error" role="alert">{musicError}</p>}
       </section>
