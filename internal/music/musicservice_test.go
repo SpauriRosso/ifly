@@ -291,15 +291,19 @@ func TestLongFormDuration(t *testing.T) {
 	}
 }
 
-// TestComposeMusicResolvesHome checks that a tense phrase ends on its tonic instead of looping from an unresolved dominant.
+// TestComposeMusicResolvesHome checks that both piano hands finish on the tonic instead of an unresolved dominant.
 func TestComposeMusicResolvesHome(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{}, semantic.SemanticAnalysis{Description: "A threatening scene."}, [32]byte{})
+	lead, bass := false, false
 	for _, note := range plan.Notes {
-		if note.Beat == float64(plan.BeatsPerLoop-4) && note.Voice == "pad" && note.MIDI%12 == 0 {
-			return
+		if note.Beat == float64(plan.BeatsPerLoop-4) && note.MIDI%12 == 0 {
+			lead = lead || note.Voice == "lead"
+			bass = bass || note.Voice == "bass"
 		}
 	}
-	t.Fatal("final harmony did not resolve to the tonic")
+	if !lead || !bass {
+		t.Fatal("the two piano hands did not resolve to the tonic")
+	}
 }
 
 // TestHarmonyForBarPreparesReturns checks that complete phrases move to a dominant before returning to the tonic.
@@ -474,9 +478,6 @@ func TestCounterlineUsesItsOwnRangeAndOnsets(t *testing.T) {
 	}
 	if counts["bass"] == 0 || counts["arp"] == 0 || counts["lead"] == 0 || totals["bass"]/counts["bass"] >= totals["arp"]/counts["arp"] || totals["arp"]/counts["arp"] >= totals["lead"]/counts["lead"] {
 		t.Fatalf("instrumental ranges collapsed together: totals=%v counts=%v", totals, counts)
-	}
-	if countVoiceInSection(plan, "pad", 0, 16) >= countVoiceInSection(plan, "pad", 32, 48) {
-		t.Fatal("opening accompaniment does not leave space for the melody")
 	}
 }
 

@@ -76,5 +76,5 @@ func composePianoScore(root, finalBar int, complexity float64, sections []MusicS
 		notes = append(notes, pianoRightHandDoubling(lead, measure.chordRoot, measure.chord.third, measure.bar, measure.role)...)
 		notes = append(notes, pianoLeftHandGesture(measure, lead, finalBar, character)...)
 	}
-	return notes
+	return mergePianoUnisons(notes)
 }
