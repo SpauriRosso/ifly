@@ -68,6 +68,21 @@ func TestMusicServiceCompose(t *testing.T) {
 	}
 }
 
+// TestDisplayedSeedDrivesMusicalChoices checks that hidden digest bytes cannot change a score with the same visible seed and scene.
+func TestDisplayedSeedDrivesMusicalChoices(t *testing.T) {
+	var first, second [32]byte
+	copy(first[:8], []byte("iflyseed"))
+	copy(second[:8], first[:8])
+	first[24], second[24] = 7, 99
+	structure := analysis.StructuralAnalysis{Complexity: 0.6}
+	interpretation := semantic.SemanticAnalysis{Description: "A joyful dance."}
+	left := composeMusic(structure, interpretation, scoreDigestFromImageDigest(first))
+	right := composeMusic(structure, interpretation, scoreDigestFromImageDigest(second))
+	if !reflect.DeepEqual(left, right) {
+		t.Fatal("hidden image digest bytes changed a piece with the same displayed seed")
+	}
+}
+
 // TestPondSceneSelectsGentleCharacter checks that visible water lilies and reflective light select a calm palette without artist recognition.
 func TestPondSceneSelectsGentleCharacter(t *testing.T) {
 	character := selectMusicalCharacter(semantic.SemanticAnalysis{
