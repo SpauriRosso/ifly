@@ -18,12 +18,19 @@ performance. Listening remains the decisive check.
   learned refinement stage, so musical richness remains limited.
 - [AccoMontage2 (ISMIR 2022)](https://archives.ismir.net/ismir2022/paper/000029.pdf)
   evaluates accompaniment against a lead melody at note, phrase, and piece levels.
-  IFLY plans harmony and melody before writing the lower piano part.
+  IFLY plans a shared harmonic skeleton before writing both piano hands.
   This is a limited rule-based adaptation, not a reproduction of that system.
+- [Diatony (IJCAI 2024)](https://ijcai.org/proceedings/2024/858)
+  describes a layered tonal workflow: global form, harmonic motion, voice
+  leading, and ornamentation. IFLY now keeps those steps separate. Its voice
+  leading is far simpler than the paper's four-voice constraint model.
 - [Baroque Classical Music Generator](https://weroarforareason.itch.io/baroque)
   is a useful piano-centered reference for distinct styles, two-hand writing,
-  score visibility, and modelled piano sound. Its page describes the product;
-  it does not publish a composition algorithm for IFLY to reproduce.
+  score visibility, and modelled piano sound. The creator's
+  [development note](https://weroarforareason.itch.io/baroque/devlog/1768803/baroque-composer-is-out)
+  says it procedurally adds features using recursion, without AI or samples.
+  That note does not disclose its musical rules. IFLY independently adds
+  bounded passing-note elaboration to selected passages.
 - [Salamander Grand Piano V3](https://github.com/sfzinstruments/SalamanderGrandPiano)
   documents a multi-layer grand-piano recording. IFLY now bundles a compact
   19-anchor MP3 subset for offline playback, with its license in
@@ -39,19 +46,21 @@ performance. Listening remains the decisive check.
 ## Implemented checks
 
 Every active scene now produces solo piano. The image controls its mood, tempo,
-key, and motifs. The score uses a chord plan and whole-phrase pitch search rather
-than independent bar-level note choices. Strong melodic onsets land on chord
-tones; passing notes resolve by step; recurring themes change rhythm and contour.
-The score uses a right-hand melody with occasional
-consonant dyads, a low bass line, and a more continuous broken-chord left hand.
-The left-hand figure changes with the scene and becomes sparse in reflective
-sections. Secondary dominants and dominant sevenths prepare selected cadences.
-The player leaves a short release tail on piano notes and uses room ambience
-without a repeated echo. Score generation and playback remain offline.
+key, and motifs. A measure plan first fixes the chord progression and nearest
+inversions. The writing then adds a right-hand phrase, left-hand bass and
+gesture, and short inner chord attacks. A second chord inside selected bars
+prepares the following dominant; both hands follow that change. B, B-prime,
+and the climax use different progressions before a shared dominant cadence.
+The left hand uses phrase-dependent flowing, Alberti, pulsed, contrapuntal,
+and reflective figures instead of one figure in every bar. Selected right-hand
+intervals receive stepwise passing notes. The sampled piano's two hands now
+have a closer audio balance and share room ambience. Score generation and
+playback remain offline.
 
 Automated tests check chord resolution, melodic intervals, melodic density,
-pitch variety, question-and-answer cadences, hand separation, bundled sample
-coverage, and the player's event limit. They cannot
+pitch variety, question-and-answer cadences, harmonic development, left-hand
+gesture changes, short inner chords, hand separation, bundled sample coverage,
+and the player's event limit. They cannot
 judge whether a piece resembles a convincing Mozart, Chopin, or Beethoven
 idiom. Those names remain artistic references, not labels for validated style
 models. The next evaluation should compare recordings of a quiet landscape,
