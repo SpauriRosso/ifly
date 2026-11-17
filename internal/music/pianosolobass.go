@@ -1,5 +1,16 @@
 package music
 
+// pianoBassRegister takes a chord tone and returns its low piano octave between MIDI 36 and 50.
+func pianoBassRegister(pitch int) int {
+	for pitch > 50 {
+		pitch -= 12
+	}
+	for pitch < 36 {
+		pitch += 12
+	}
+	return pitch
+}
+
 // pianoSoloBass takes one harmonic measure and the final bar, then returns only the low piano attacks needed at its chord changes.
 func pianoSoloBass(measure pianoMeasure, finalBar int) []MusicNote {
 	start := float64(measure.bar * 4)

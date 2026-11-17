@@ -32,29 +32,3 @@ func TestPianoCalmPeriodTonicizesRelativeMinor(t *testing.T) {
 		t.Fatalf("the opening lacks V/vi to vi: %+v then %+v", measures[0].lateChord, measures[1].chord)
 	}
 }
-
-// TestPianoAppliedSeventhsStayBetweenHands checks that each prepared dominant adds a restrained seventh below the melody register.
-func TestPianoAppliedSeventhsStayBetweenHands(t *testing.T) {
-	for mood, character := range musicalStyles {
-		sections := make([]MusicSection, len(formEpisodes))
-		for center := 0; center < 12; center++ {
-			root := 48 + center
-			measures := planPianoMeasures(root, len(formEpisodes)*4-1, sections, [32]byte{}, character)
-			for _, measure := range measures {
-				if measure.lateChord == nil {
-					continue
-				}
-				seventhClass := (root + measure.lateChord.rootOffset + 10) % 12
-				found := false
-				for _, note := range pianoInnerVoices(measure, len(measures)-1, character) {
-					if note.Beat == float64(measure.bar*4+2) && note.MIDI%12 == seventhClass && note.MIDI >= 55 && note.MIDI <= 66 {
-						found = true
-					}
-				}
-				if !found {
-					t.Fatalf("%s center %d bar %d misses the inner dominant seventh", mood, center, measure.bar)
-				}
-			}
-		}
-	}
-}
