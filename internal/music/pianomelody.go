@@ -233,5 +233,8 @@ func planPianoMelody(root, finalBar int, complexity float64, sections []MusicSec
 			previous = pitches[len(pitches)-1]
 		}
 	}
+	for bar := range bars {
+		bars[bar] = ornamentPianoBar(bars[bar], measures[bar], complexity, root, character.scale)
+	}
 	return bars
 }
