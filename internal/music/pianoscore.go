@@ -62,32 +62,13 @@ func composePianoScore(root, finalBar int, complexity float64, sections []MusicS
 	notes := make([]MusicNote, 0, 700)
 	for _, measure := range measures {
 		start := float64(measure.bar * 4)
-		padLength := padSustainBeats[measure.bar%4]
-		if measure.role == 3 {
-			padLength = 3.4
-		}
-		if measure.bar == finalBar {
-			padLength = 2
-		}
-		if measure.lateChord != nil {
-			padLength = 1.7
-		}
-		for voiceIndex, pitch := range measure.voicing {
-			if (measure.role == 0 || measure.role == 3) && voiceIndex == 1 {
-				continue
-			}
-			notes = append(notes, MusicNote{start, padLength, pitch, 0.24 * measure.energy, "pad"})
-		}
-		if character.colorTone != 0 && measure.bar%2 == 0 && measure.role != 3 && measure.bar != finalBar {
-			notes = append(notes, MusicNote{start + 0.3, 2.1, measure.chordRoot + character.colorTone, 0.16 * measure.energy, "pad"})
-		}
+		notes = append(notes, pianoInnerVoices(measure, finalBar, character)...)
 		if measure.bar != finalBar {
 			notes = append(notes, pianoCadentialSeventh(start, measure.bar, measure.role, measure.chordRoot, measure.chord, measure.energy)...)
 		}
 		bass := bassNotes(start, measure.bar, measure.role, finalBar, measure.chordRoot, measure.chord.third, measure.energy, character)
 		if measure.lateChord != nil {
 			bass = []MusicNote{bass[0], {Beat: start + 2, Duration: 1.55, MIDI: root + measure.lateChord.rootOffset - 12, Velocity: 0.48 * measure.energy, Voice: "bass"}}
-			notes = append(notes, MusicNote{Beat: start + 2, Duration: 1.5, MIDI: measure.lateVoicing[0], Velocity: 0.27 * measure.energy, Voice: "pad"})
 		}
 		notes = append(notes, bass...)
 		lead := melody[measure.bar]

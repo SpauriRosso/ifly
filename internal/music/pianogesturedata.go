@@ -56,3 +56,22 @@ var pianoGestures = map[pianoTexture][4]pianoGesture{
 		{nil, nil},
 	},
 }
+
+// pianoChordDurations and pianoChordVoices pace inner chord attacks instead of sustaining every inversion across the bar.
+var pianoChordDurations = [6][4]float64{
+	{1.5, 0.75, 1.2, 0.65},
+	{1.4, 1.0, 1.3, 0.9},
+	{1.15, 0.9, 1.2, 0.85},
+	{1.4, 0, 0.9, 0},
+	{1.55, 1.05, 1.35, 0.9},
+	{1.5, 1.1, 0.8, 0.9},
+}
+
+var pianoChordVoices = [6][4]int{
+	{2, 1, 1, 2},
+	{2, 1, 2, 2},
+	{2, 2, 2, 2},
+	{1, 0, 1, 0},
+	{2, 2, 2, 2},
+	{2, 1, 1, 3},
+}

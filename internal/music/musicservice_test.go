@@ -80,7 +80,7 @@ func TestPondSceneSelectsGentleCharacter(t *testing.T) {
 	}
 }
 
-// TestCalmPaletteMovesThroughRelativeMinor checks that gentle scenes use a four-chord path and sparse added ninths.
+// TestCalmPaletteMovesThroughRelativeMinor checks that gentle scenes use a four-chord path and a few added ninths at phrase arrivals.
 func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
 	character := musicalStyles["calm"]
 	if character.progression[0].rootOffset != 0 || character.progression[1].rootOffset != 9 || character.progression[2].rootOffset != 5 || character.progression[3].rootOffset != 7 || character.bridge[2].rootOffset != 2 {
@@ -89,11 +89,11 @@ func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
 	plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.7}, semantic.SemanticAnalysis{Description: "A pond with water lilies."}, [32]byte{})
 	colorNotes := 0
 	for _, note := range plan.Notes {
-		if note.Voice == "pad" && note.Beat-float64(int(note.Beat)) > 0.25 {
+		if note.Voice == "pad" && note.Beat-float64(int(note.Beat)) == 0.25 {
 			colorNotes++
 		}
 	}
-	if colorNotes < 10 {
+	if colorNotes < 4 {
 		t.Fatalf("gentle accompaniment lacks spaced color notes: %d", colorNotes)
 	}
 }
