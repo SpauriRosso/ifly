@@ -107,6 +107,17 @@ var padSustainBeats = [4]float64{3.4, 2.6, 3.1, 2.1}
 
 // musicalStyles keeps musical choices as data so the score generator only arranges and transforms them.
 var musicalStyles = map[string]musicalCharacter{
+	"melancholy": {
+		mood: "melancholy", mode: "minor", timbre: "soft", baseTempo: 72,
+		pianoLead:    true,
+		tempoArc:     [6]int{},
+		scale:        []int{0, 2, 3, 5, 7, 8, 10},
+		progression:  [4]chordSpec{{0, 3}, {8, 4}, {5, 3}, {7, 4}},
+		answer:       [4]chordSpec{{0, 3}, {5, 3}, {7, 4}, {0, 3}},
+		bridge:       [4]chordSpec{{3, 4}, {8, 4}, {2, 4}, {7, 4}},
+		bridgeReturn: [4]chordSpec{{8, 4}, {5, 3}, {2, 4}, {7, 4}},
+		climax:       [4]chordSpec{{0, 3}, {8, 4}, {2, 4}, {7, 4}},
+	},
 	"calm": {
 		mood: "calm", mode: "major", timbre: "warm", baseTempo: 64,
 		pianoLead:    true,

@@ -15,7 +15,7 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 	words := strings.FieldsFunc(strings.ToLower(interpretation.Description+" "+interpretation.Atmosphere+" "+strings.Join(interpretation.Subjects, " ")), func(r rune) bool {
 		return !unicode.IsLetter(r)
 	})
-	scores := [3]int{}
+	scores := [4]int{}
 	for _, word := range words {
 		switch word {
 		case "violent", "violence", "threat", "threatening", "torture", "suffering", "blood", "fear", "terrifying", "ominous", "tense", "danger", "storm":
@@ -26,6 +26,10 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 			scores[1]++
 		case "dynamic", "energetic", "playful", "lively", "dancing", "vibrant", "motion":
 			scores[2] += 2
+		case "happy", "joyful", "cheerful", "celebration", "celebrating", "festive", "sunny", "delighted":
+			scores[2] += 2
+		case "sad", "melancholy", "melancholic", "lonely", "sorrow", "grief", "wistful", "nostalgic", "mourning", "weeping":
+			scores[3] += 2
 		}
 	}
 	if interpretation.Uncertain {
@@ -35,8 +39,11 @@ func selectMusicalCharacter(interpretation semantic.SemanticAnalysis) musicalCha
 			}
 		}
 	}
-	if scores[0] > 0 && scores[0] >= scores[1] && scores[0] >= scores[2] {
+	if scores[0] > 0 && scores[0] >= scores[1] && scores[0] >= scores[2] && scores[0] >= scores[3] {
 		return musicalStyles["tense"]
+	}
+	if scores[3] > 0 && scores[3] >= scores[1] && scores[3] >= scores[2] {
+		return musicalStyles["melancholy"]
 	}
 	if scores[1] > 0 && scores[1] >= scores[2] {
 		return musicalStyles["calm"]

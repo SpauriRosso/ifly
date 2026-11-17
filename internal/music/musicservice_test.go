@@ -80,6 +80,14 @@ func TestPondSceneSelectsGentleCharacter(t *testing.T) {
 	}
 }
 
+// TestSadSceneSelectsMelancholy checks that sadness receives a restrained minor-key theme instead of a generic neutral score.
+func TestSadSceneSelectsMelancholy(t *testing.T) {
+	character := selectMusicalCharacter(semantic.SemanticAnalysis{Description: "A lonely figure mourning beside a quiet lake."})
+	if character.mood != "melancholy" || character.mode != "minor" || character.baseTempo >= musicalStyles["tense"].baseTempo {
+		t.Fatalf("sad scene lost its melancholy character: %+v", character)
+	}
+}
+
 // TestCalmPaletteMovesThroughRelativeMinor checks that gentle scenes use a four-chord path and a few added ninths at phrase arrivals.
 func TestCalmPaletteMovesThroughRelativeMinor(t *testing.T) {
 	character := musicalStyles["calm"]
