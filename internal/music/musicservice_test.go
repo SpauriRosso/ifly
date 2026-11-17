@@ -213,9 +213,8 @@ func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 			digest[0], digest[1], digest[2] = center, center%2, center%3
 			plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.5}, interpretation, digest)
 			root := 48 + int(center)
+			measures := planPianoMeasures(root, plan.BeatsPerLoop/4-1, plan.Sections, digest, character)
 			for bar := 0; bar < plan.BeatsPerLoop/4; bar++ {
-				chord := harmonyForBar(character, bar, formEpisodes[bar/4].role, plan.BeatsPerLoop/4-1)
-				members := chordPitchClasses(root+chord.rootOffset, chord.third)
 				lead := []MusicNote{}
 				for _, note := range plan.Notes {
 					if note.Beat < float64(bar*4) || note.Beat >= float64((bar+1)*4) {
@@ -224,11 +223,15 @@ func TestLeadAndHumResolveWithinHarmony(t *testing.T) {
 					if note.Voice == "lead" {
 						lead = append(lead, note)
 					}
+					chord := measures[bar].chordAt(note.Beat - float64(bar*4))
+					members := chordPitchClasses(root+chord.rootOffset, chord.third)
 					if note.Voice == "hum" && !pitchBelongsToChord(note.MIDI, members) {
 						t.Fatalf("unresolved hum in %q, bar %d: %+v", description, bar, note)
 					}
 				}
 				for index, note := range lead {
+					chord := measures[bar].chordAt(note.Beat - float64(bar*4))
+					members := chordPitchClasses(root+chord.rootOffset, chord.third)
 					if pitchBelongsToChord(note.MIDI, members) {
 						continue
 					}
@@ -687,7 +690,7 @@ func TestPhraseDynamicsBreathe(t *testing.T) {
 	if pads[2].Velocity <= pads[0].Velocity || pads[3].Velocity >= pads[2].Velocity {
 		t.Fatalf("opening phrase has no intensity arc: %+v %+v %+v", pads[0], pads[2], pads[3])
 	}
-	if pads[1].Duration >= pads[0].Duration || pads[3].Duration >= pads[2].Duration {
+	if pads[1].Duration >= pads[0].Duration || pads[3].Duration >= pads[0].Duration {
 		t.Fatalf("accompaniment does not leave phrase space: %+v %+v %+v %+v", pads[0], pads[1], pads[2], pads[3])
 	}
 	lastBar := plan.BeatsPerLoop/4 - 1

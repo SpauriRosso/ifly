@@ -14,7 +14,7 @@ func pianoLeftHandGesture(measure pianoMeasure, lead []MusicNote, finalBar int, 
 		if texture == pianoCounterpoint && !ascendingLead {
 			tone = 2 - tone
 		}
-		pitch := measure.voicing[tone] - 12
+		pitch := measure.voicingAt(beat)[tone] - 12
 		for pitch > 60 {
 			pitch -= 12
 		}

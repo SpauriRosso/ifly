@@ -62,8 +62,8 @@ func pianoPhraseEvents(episodeIndex, root, finalBar int, complexity float64, dig
 	events := []pianoMelodyEvent{}
 	for position := 0; position < 4; position++ {
 		bar := episodeIndex*4 + position
-		chord := measures[bar].chord
 		for _, beat := range pianoRhythmForBar(character.mood, episode.role, position, complexity) {
+			chord := measures[bar].chordAt(beat)
 			events = append(events, pianoMelodyEvent{
 				bar: bar, beat: beat, chordRoot: root + chord.rootOffset, third: chord.third,
 				strong: math.Mod(beat, 1) == 0,
