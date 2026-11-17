@@ -9,7 +9,9 @@ import (
 func harmonyForBar(character musicalCharacter, bar, section, finalBar int) chordSpec {
 	position := bar % 4
 	chord := character.progression[position]
-	if section == 2 || (section == 1 && position == 3) || (section == 4 && position == 2) {
+	if section == 1 {
+		chord = character.answer[position]
+	} else if section == 2 || (section == 4 && position == 2) {
 		chord = character.bridge[position]
 	}
 	if section == 3 {
