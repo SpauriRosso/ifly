@@ -67,6 +67,10 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 	var previousVoicing [3]int
 	previousLeadPitch := 0
 	finalBar := len(sections)*4 - 1
+	var pianoBars [][]MusicNote
+	if character.pianoLead {
+		pianoBars = planPianoMelody(root, finalBar, complexity, sections, digest, character)
+	}
 	for bar := 0; bar <= finalBar; bar++ {
 		start := float64(bar * 4)
 		episodeIndex := bar / 4
@@ -102,12 +106,17 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 				notes = append(notes, MusicNote{start + beat, 0.18, root, 0.32 * energy, "pulse"})
 			}
 		}
-		currentMotif := motif
-		if section == 2 || section == 3 {
-			currentMotif = bridgeMotif
+		var lead []MusicNote
+		if character.pianoLead {
+			lead = pianoBars[bar]
+		} else {
+			currentMotif := motif
+			if section == 2 || section == 3 {
+				currentMotif = bridgeMotif
+			}
+			currentMotif = turnMotif(currentMotif, episode.motifTurn)
+			lead, previousLeadPitch = melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		}
-		currentMotif = turnMotif(currentMotif, episode.motifTurn)
-		lead, finalPitch := melodyNotes(start, bar, section, finalBar, root, chord, currentMotif, previousLeadPitch, energy, complexity, character)
 		notes = append(notes, lead...)
 		if character.pianoLead {
 			notes = append(notes, pianoRightHandDoubling(lead, chordRoot, chord.third, bar, section)...)
@@ -115,7 +124,6 @@ func composeMusic(structure analysis.StructuralAnalysis, interpretation semantic
 		} else {
 			notes = append(notes, arpeggioNotes(start, section, bar, voicing, energy, character, lead)...)
 		}
-		previousLeadPitch = finalPitch
 		if useHum {
 			notes = append(notes, hummingNotes(start, section, bar, chordRoot, chord.third, energy)...)
 		}
