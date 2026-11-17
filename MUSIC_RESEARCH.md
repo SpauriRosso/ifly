@@ -10,6 +10,12 @@ performance. Listening remains the decisive check.
 - [MusicFrameworks (ISMIR 2021)](https://archives.ismir.net/ismir2021/paper/000017.pdf)
   models a song at several levels: sections, phrases, chords, melody, and rhythm.
   IFLY likewise plans a long form before assigning bar harmony and note events.
+- [MeloForm (ISMIR 2022)](https://archives.ismir.net/ismir2022/paper/000068.pdf)
+  builds motifs into phrases and sections with repetition and variation, then
+  refines the rule-generated melody with a learned model. IFLY now plans each
+  four-bar piano phrase before emitting notes, with a question ending on the
+  dominant and an answer resolving to the tonic. It does not implement the
+  learned refinement stage, so musical richness remains limited.
 - [AccoMontage2 (ISMIR 2022)](https://archives.ismir.net/ismir2022/paper/000029.pdf)
   evaluates accompaniment against a lead melody at note, phrase, and piece levels.
   IFLY plans harmony and melody before writing the lower piano part.
@@ -33,15 +39,19 @@ performance. Listening remains the decisive check.
 ## Implemented checks
 
 Every active scene now produces solo piano. The image controls its mood, tempo,
-key, and motifs. The score uses a chord plan, a right-hand melody with occasional
+key, and motifs. The score uses a chord plan and whole-phrase pitch search rather
+than independent bar-level note choices. Strong melodic onsets land on chord
+tones; passing notes resolve by step; recurring themes change rhythm and contour.
+The score uses a right-hand melody with occasional
 consonant dyads, a low bass line, and a more continuous broken-chord left hand.
 The left-hand figure changes with the scene and becomes sparse in reflective
 sections. Secondary dominants and dominant sevenths prepare selected cadences.
 The player leaves a short release tail on piano notes and uses room ambience
 without a repeated echo. Score generation and playback remain offline.
 
-Automated tests check chord resolution, melodic intervals, hand separation,
-cadences, bundled sample coverage, and the player's event limit. They cannot
+Automated tests check chord resolution, melodic intervals, melodic density,
+pitch variety, question-and-answer cadences, hand separation, bundled sample
+coverage, and the player's event limit. They cannot
 judge whether a piece resembles a convincing Mozart, Chopin, or Beethoven
 idiom. Those names remain artistic references, not labels for validated style
 models. The next evaluation should compare recordings of a quiet landscape,
