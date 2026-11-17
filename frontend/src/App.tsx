@@ -10,13 +10,13 @@ import { cancelInterpretation, interpretPreview } from './semanticAnalysis'
 import { composePreview } from './musicPreview'
 import { MusicPlayer } from './musicPlayer'
 import { INSTRUMENT_LABELS } from './musicInstruments'
-import { TIMBRES, type MusicVoice } from './musicTimbres'
+import { TIMBRES } from './musicTimbres'
 import { createTempoMap } from './musicTiming'
 import brandMark from './assets/ifly-brand.png'
 import './app.css'
 
-const MOOD_LABELS: Record<string, string> = { calm: 'Calme', tense: 'Tendue', energetic: 'Énergique', neutral: 'Neutre' }
-const MODE_LABELS: Record<string, string> = { pentatonic: 'pentatonique', minor: 'mineur', major: 'majeur', dorian: 'dorien' }
+const THEME_LABELS: Record<string, string> = { calm: 'Contemplatif', tense: 'Dramatique', energetic: 'Joyeux', melancholy: 'Mélancolique', neutral: 'Introspectif' }
+const MODE_LABELS: Record<string, string> = { pentatonic: 'pentatonique', minor: 'mineur', major: 'majeur', dorian: 'dorien', lydian: 'lydien', mixolydian: 'mixolydien', phrygian: 'phrygien', 'harmonic-minor': 'mineur harmonique' }
 const TIMBRE_LABELS: Record<string, string> = { warm: 'chaleureux', dark: 'sombre', bright: 'clair', soft: 'doux' }
 
 // percent formats a normalized metric for the diagnostic panel.
@@ -31,31 +31,10 @@ function describeMusicForm(plan: MusicPlan): string {
   return `${plan.sections?.length ?? 0} phrases · ${duration}`
 }
 
-// describeTempoRange takes a score and returns the slowest and fastest phrase tempos for its inspector summary.
-function describeTempoRange(plan: MusicPlan): string {
-  const tempi = plan.sections?.map(section => section.tempoBpm) ?? [plan.tempoBpm]
-  return `${Math.min(...tempi)}–${Math.max(...tempi)} BPM`
-}
-
 // describeMainInstrument takes a score and returns the instrument carrying its melody.
 function describeMainInstrument(plan: MusicPlan): string {
   const instrument = TIMBRES[plan.timbre]?.voices.lead.instrument
   return instrument ? INSTRUMENT_LABELS[instrument] : 'Indisponible'
-}
-
-// describeInstrumentPalette takes a score and returns the instruments used by its accompaniment voices.
-function describeInstrumentPalette(plan: MusicPlan): string {
-  const profile = TIMBRES[plan.timbre]
-  if (!profile) return 'Instruments indisponibles'
-  const names = new Set<string>()
-  for (const note of plan.notes ?? []) {
-    const voice = note.voice as MusicVoice
-    const instrument = profile.voices[voice]?.instrument
-    if (voice === 'lead') continue
-    if (instrument) names.add(INSTRUMENT_LABELS[instrument])
-    else if (voice === 'pulse') names.add('Percussion légère')
-  }
-  return [...names].join(' · ')
 }
 
 // App owns the temporary artwork, its asynchronous analysis, and disposable preview resources.
@@ -316,13 +295,13 @@ function App() {
         <div className="pipeline"><span className={analysis ? 'done' : ''}>01 · Structure</span><span className={semantic ? 'done' : ''}>02 · Sens expérimental</span><span className={musicPlan ? 'done' : ''}>03 · Musique</span><span>04 · Évolution</span></div>
       </section>
       <section className="inspector-section music-section">
-        <h2>Composition instrumentale</h2>
+        <h2>Composition pour piano</h2>
         {musicPlan ? <>
-          <p className="semantic-description">{MOOD_LABELS[musicPlan.mood] ?? 'Neutre'} · {describeTempoRange(musicPlan)} · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
+          <p className="semantic-description">Thème {THEME_LABELS[musicPlan.mood] ?? 'Introspectif'} · {musicPlan.tempoBpm} BPM · mode {MODE_LABELS[musicPlan.mode] ?? musicPlan.mode}</p>
           <p className="hint">Forme : {describeMusicForm(musicPlan)} · timbre {TIMBRE_LABELS[musicPlan.timbre] ?? musicPlan.timbre}</p>
-          <p className="semantic-description">Instrument principal : {describeMainInstrument(musicPlan)}</p>
-          <p className="hint">Accompagnements : {describeInstrumentPalette(musicPlan)}</p>
-          <p className="analysis-note">Instruments choisis automatiquement pour cette image. La pièce se termine après sa conclusion.</p>
+          <p className="semantic-description">Instrument : {describeMainInstrument(musicPlan)}</p>
+          <p className="hint">Seed : {musicPlan.seed}</p>
+          <p className="analysis-note">Le seed relie cette partition à l’image. La pièce se termine après sa conclusion.</p>
         </> : <p className="hint">La musique est préparée après l’interprétation.</p>}
         {musicError && <p className="error" role="alert">{musicError}</p>}
       </section>
