@@ -31,10 +31,24 @@ func harmonyForBar(character musicalCharacter, bar, section, finalBar int) chord
 	}
 	if bar == finalBar {
 		third := 4
-		if character.mode == "minor" || character.mode == "dorian" {
-			third = 3
+		for _, degree := range character.scale {
+			if degree == 3 {
+				third = 3
+				break
+			}
 		}
 		chord = chordSpec{rootOffset: 0, third: third}
+	}
+	if character.pianoLead {
+		chord = pianoChordInMode(character.mode, chord)
+	}
+	return chord
+}
+
+// pianoChordInMode takes a written chord and active mode, then returns a compatible triad without changing the phrase's rhythm.
+func pianoChordInMode(mode string, chord chordSpec) chordSpec {
+	if replacement, exists := pianoModeChordReplacements[mode][chord]; exists {
+		return replacement
 	}
 	return chord
 }
