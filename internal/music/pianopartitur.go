@@ -37,24 +37,6 @@ func pianoScoredPitch(chordRoot, third, tone, alteration, previous, direction in
 	return best
 }
 
-// pianoScoredStep takes a written figure step and the artwork seed, then returns its small, recurring thematic variation.
-func pianoScoredStep(step pianoScoreStep, kind pianoPhraseKind, position, index int, digest [32]byte) pianoScoreStep {
-	if position != 0 || (index != 1 && index != 2) || (kind != pianoQuestion && kind != pianoConsequence) {
-		return step
-	}
-	if digest[1]%3 == 1 {
-		if index == 1 {
-			step.alteration = 1
-			step.direction = 1
-		} else if index == 2 {
-			step.direction = -1
-		}
-	} else if digest[1]%3 == 2 && kind == pianoQuestion {
-		step.alteration = -2
-	}
-	return step
-}
-
 // planPianoScoreLead takes harmony, form, visual complexity, and an artwork seed, then writes and ornaments playable right-hand figures.
 func planPianoScoreLead(root, finalBar int, complexity float64, sections []MusicSection, digest [32]byte, character musicalCharacter, measures []pianoMeasure) [][]MusicNote {
 	bars := make([][]MusicNote, finalBar+1)
@@ -64,10 +46,17 @@ func planPianoScoreLead(root, finalBar int, complexity float64, sections []Music
 		kind := pianoEpisodeFigures[episodeIndex]
 		phrase := pianoPhraseFigures[kind]
 		for position, figure := range phrase {
+			if position < 2 && (kind == pianoQuestion || kind == pianoConsequence) {
+				answer := 0
+				if kind == pianoConsequence {
+					answer = 1
+				}
+				figure = pianoOpeningIdeas[digest[1]%3][answer][position]
+			}
 			bar := episodeIndex*4 + position
 			measure := measures[bar]
 			for index, written := range figure {
-				step := pianoScoredStep(written, kind, position, index, digest)
+				step := written
 				chord := measure.chordAt(step.beat)
 				pitch := pianoScoredPitch(root+chord.rootOffset, chord.third, step.tone, step.alteration, previous, step.direction)
 				end := 4.0

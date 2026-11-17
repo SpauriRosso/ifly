@@ -2,6 +2,7 @@ package music
 
 import (
 	"math"
+	"reflect"
 	"testing"
 
 	"ifly/internal/analysis"
@@ -20,6 +21,33 @@ func TestPianoWrittenOpeningResolvesChromaticNeighbor(t *testing.T) {
 		}
 		if lead[0].Beat > 0.05 || math.Abs(lead[1].Beat-0.5) > 0.05 || math.Abs(lead[2].Beat-1) > 0.05 || lead[1].MIDI != lead[0].MIDI-1 || lead[2].MIDI != lead[0].MIDI {
 			t.Fatalf("center %d lost its chromatic neighbor and resolution: %+v", center, lead[:3])
+		}
+	}
+}
+
+// TestPianoThemesVaryByArtwork checks that three image seeds select distinct opening phrases in the same key and mood.
+func TestPianoThemesVaryByArtwork(t *testing.T) {
+	type attack struct {
+		beat  float64
+		pitch int
+	}
+	var themes [3][]attack
+	for variant := byte(0); variant < 3; variant++ {
+		var digest [32]byte
+		digest[1] = variant
+		plan := composeMusic(analysis.StructuralAnalysis{Complexity: 0.5}, semantic.SemanticAnalysis{Description: "A serene pond."}, digest)
+		for _, note := range upperMelody(plan) {
+			if note.Beat >= 8 {
+				break
+			}
+			themes[variant] = append(themes[variant], attack{beat: math.Round(note.Beat*4) / 4, pitch: note.MIDI})
+		}
+	}
+	for first := 0; first < len(themes); first++ {
+		for second := first + 1; second < len(themes); second++ {
+			if reflect.DeepEqual(themes[first], themes[second]) {
+				t.Fatalf("artwork variants %d and %d repeat the same opening", first, second)
+			}
 		}
 	}
 }
