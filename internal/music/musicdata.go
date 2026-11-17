@@ -20,7 +20,6 @@ type musicalCharacter struct {
 	melodyRhythm [2][]float64
 	windLead     bool
 	pianoLead    bool
-	pianoFigure  [8]int
 	bassBeats    []float64
 	pulseBeats   []float64
 	arpBeats     []float64
@@ -106,17 +105,11 @@ var phraseDynamics = [6][4]float64{
 // padSustainBeats leaves audible space before phrase answers and cadences instead of holding every chord for the full bar.
 var padSustainBeats = [4]float64{3.4, 2.6, 3.1, 2.1}
 
-// Piano onset data controls left-hand activity without mixing pattern values into score-building logic.
-var pianoLeftHandBeats = []float64{0.5, 1, 1.5, 2, 2.5, 3, 3.5}
-var pianoDevelopedBeats = []float64{0.25, 0.5, 1, 1.5, 2, 2.5, 3, 3.5}
-var pianoReflectiveBeats = []float64{1, 3}
-
 // musicalStyles keeps musical choices as data so the score generator only arranges and transforms them.
 var musicalStyles = map[string]musicalCharacter{
 	"calm": {
 		mood: "calm", mode: "major", timbre: "warm", baseTempo: 64,
 		pianoLead:    true,
-		pianoFigure:  [8]int{0, 2, 1, 2, 0, 2, 1, 2},
 		tempoArc:     [6]int{0, 3, 6, -5, 4, -3},
 		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {9, 3}, {5, 4}, {7, 4}},
@@ -132,7 +125,6 @@ var musicalStyles = map[string]musicalCharacter{
 	"tense": {
 		mood: "tense", mode: "minor", timbre: "dark", baseTempo: 98,
 		pianoLead:    true,
-		pianoFigure:  [8]int{0, 0, 2, 1, 0, 0, 2, 1},
 		tempoArc:     [6]int{0, 4, 9, -7, 6, -4},
 		scale:        []int{0, 2, 3, 5, 7, 8, 10},
 		progression:  [4]chordSpec{{0, 3}, {8, 4}, {10, 4}, {7, 4}},
@@ -147,7 +139,6 @@ var musicalStyles = map[string]musicalCharacter{
 	"energetic": {
 		mood: "energetic", mode: "major", timbre: "bright", baseTempo: 106,
 		pianoLead:    true,
-		pianoFigure:  [8]int{0, 2, 1, 2, 0, 2, 1, 2},
 		tempoArc:     [6]int{0, 5, 10, -6, 7, -2},
 		scale:        []int{0, 2, 4, 5, 7, 9, 11},
 		progression:  [4]chordSpec{{0, 4}, {5, 4}, {7, 4}, {9, 3}},
@@ -162,7 +153,6 @@ var musicalStyles = map[string]musicalCharacter{
 	"neutral": {
 		mood: "neutral", mode: "dorian", timbre: "soft", baseTempo: 78,
 		pianoLead:    true,
-		pianoFigure:  [8]int{0, 1, 2, 1, 0, 2, 1, 2},
 		tempoArc:     [6]int{0, 3, 7, -5, 5, -3},
 		scale:        []int{0, 2, 3, 5, 7, 9, 10},
 		progression:  [4]chordSpec{{0, 3}, {5, 4}, {10, 4}, {0, 3}},
