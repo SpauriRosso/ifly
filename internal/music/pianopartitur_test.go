@@ -9,8 +9,8 @@ import (
 	"ifly/internal/semantic"
 )
 
-// TestPianoWrittenOpeningResolvesChromaticNeighbor checks that the opening ornament is a deliberate semitone departure and return.
-func TestPianoWrittenOpeningResolvesChromaticNeighbor(t *testing.T) {
+// TestPianoWrittenOpeningResolvesModalNeighbor checks that the opening figure visits the mode's lower neighbor and returns.
+func TestPianoWrittenOpeningResolvesModalNeighbor(t *testing.T) {
 	for center := byte(0); center < 12; center++ {
 		var digest [32]byte
 		digest[0] = center
@@ -19,8 +19,8 @@ func TestPianoWrittenOpeningResolvesChromaticNeighbor(t *testing.T) {
 		if len(lead) < 3 {
 			t.Fatalf("center %d has too few written notes: %+v", center, lead)
 		}
-		if lead[0].Beat > 0.05 || math.Abs(lead[1].Beat-0.5) > 0.05 || math.Abs(lead[2].Beat-1) > 0.05 || lead[1].MIDI != lead[0].MIDI-1 || lead[2].MIDI != lead[0].MIDI {
-			t.Fatalf("center %d lost its chromatic neighbor and resolution: %+v", center, lead[:3])
+		if lead[0].Beat > 0.05 || math.Abs(lead[1].Beat-0.5) > 0.05 || math.Abs(lead[2].Beat-1) > 0.05 || lead[0].MIDI-lead[1].MIDI < 1 || lead[0].MIDI-lead[1].MIDI > 2 || lead[2].MIDI != lead[0].MIDI {
+			t.Fatalf("center %d lost its modal neighbor and resolution: %+v", center, lead[:3])
 		}
 	}
 }

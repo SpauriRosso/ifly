@@ -37,6 +37,21 @@ func pianoScoredPitch(chordRoot, third, tone, alteration, previous, direction in
 	return best
 }
 
+// pianoLowerScaleOffset takes a chord tone and the artwork's mode, then returns the nearest lower scale step.
+func pianoLowerScaleOffset(chordRoot, third, tone, tonalRoot int, scale []int) int {
+	intervals := [3]int{0, third, 7}
+	base := (chordRoot + intervals[tone]) % 12
+	for distance := 1; distance <= 2; distance++ {
+		neighbor := (base - distance + 12) % 12
+		for _, degree := range scale {
+			if neighbor == (tonalRoot+degree)%12 {
+				return -distance
+			}
+		}
+	}
+	return -1
+}
+
 // planPianoScoreLead takes harmony, form, visual complexity, and an artwork seed, then writes and ornaments playable right-hand figures.
 func planPianoScoreLead(root, finalBar int, complexity float64, sections []MusicSection, digest [32]byte, character musicalCharacter, measures []pianoMeasure) [][]MusicNote {
 	bars := make([][]MusicNote, finalBar+1)
@@ -58,7 +73,11 @@ func planPianoScoreLead(root, finalBar int, complexity float64, sections []Music
 			for index, written := range figure {
 				step := written
 				chord := measure.chordAt(step.beat)
-				pitch := pianoScoredPitch(root+chord.rootOffset, chord.third, step.tone, step.alteration, previous, step.direction)
+				alteration := step.alteration
+				if alteration < 0 {
+					alteration = pianoLowerScaleOffset(root+chord.rootOffset, chord.third, step.tone, root, character.scale)
+				}
+				pitch := pianoScoredPitch(root+chord.rootOffset, chord.third, step.tone, alteration, previous, step.direction)
 				end := 4.0
 				if index+1 < len(figure) {
 					end = figure[index+1].beat

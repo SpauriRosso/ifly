@@ -21,7 +21,7 @@ const (
 	pianoCoda
 )
 
-// Chord tones are root, third, and fifth; alteration introduces a neighbor that resolves at the next scored attack.
+// Chord tones are root, third, and fifth; a negative alteration requests the lower modal neighbor before resolution.
 var pianoThemeFigure = [4][]pianoScoreStep{
 	{{0, 2, 0, 0}, {0.5, 2, -1, -1}, {1, 2, 0, 1}, {1.5, 1, 0, -1}, {2.5, 0, 0, -1}, {3.25, 1, 0, 1}},
 	{{0, 1, 0, 0}, {0.75, 2, 0, 1}, {1.5, 1, 0, -1}, {2.25, 0, 0, -1}, {3.25, 2, 0, 1}},
